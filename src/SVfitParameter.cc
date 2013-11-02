@@ -10,7 +10,7 @@
 #include <iostream>
 #include <iomanip>
 
-using namespace SVfit_namespace;
+using namespace svFit_namespace;
 
 std::vector<double> SVfitParameter::defaultInitialValues_;
 std::vector<std::pair<double, double> > SVfitParameter::defaultLimits_;

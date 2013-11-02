@@ -14,7 +14,7 @@
 
 #include "TauAnalysis/SVfit/interface/SVfitSingleParticleLikelihood.h"
 
-#include "AnalysisDataFormats/TauAnalysis/interface/SVfitSingleParticleHypothesisBase.h"
+#include "AnalysisDataFormats/SVfit/interface/SVfitSingleParticleHypothesisBase.h"
 
 #include "TauAnalysis/SVfit/interface/SVfitLegTrackExtractor.h"
 #include "TauAnalysis/SVfit/interface/SVfitTrackExtrapolation.h"

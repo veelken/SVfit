@@ -1,13 +1,13 @@
-#ifndef TauAnalysis_CandidateTools_CompositePtrCandidateT1T2MEtAlgorithm_h
-#define TauAnalysis_CandidateTools_CompositePtrCandidateT1T2MEtAlgorithm_h
+#ifndef TauAnalysis_SVfit_CompositePtrCandidateT1T2MEtAlgorithm_h
+#define TauAnalysis_SVfit_CompositePtrCandidateT1T2MEtAlgorithm_h
 
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "DataFormats/Math/interface/deltaR.h"
 #include "DataFormats/Math/interface/normalizedPhi.h"
 
-#include "AnalysisDataFormats/TauAnalysis/interface/CompositePtrCandidateT1T2MEt.h"
-#include "AnalysisDataFormats/TauAnalysis/interface/NSVfitResonanceHypothesisSummary.h"
+#include "AnalysisDataFormats/SVfit/interface/CompositePtrCandidateT1T2MEt.h"
+#include "AnalysisDataFormats/SVfit/interface/SVfitResonanceHypothesisSummary.h"
 #include "TrackingTools/TransientTrack/interface/TransientTrackBuilder.h"
 
 #include "DataFormats/Candidate/interface/CandidateFwd.h"
@@ -16,12 +16,12 @@
 #include "DataFormats/HepMCCandidate/interface/GenParticle.h"
 #include "DataFormats/METReco/interface/MET.h"
 
-#include "TauAnalysis/CandidateTools/interface/PFMEtSignInterface.h"
-#include "TauAnalysis/CandidateTools/interface/NSVfitAlgorithmBase.h"
-#include "TauAnalysis/CandidateTools/interface/mTauTauMinAlgo.h"
-#include "TauAnalysis/CandidateTools/interface/candidateAuxFunctions.h"
-#include "TauAnalysis/CandidateTools/interface/generalAuxFunctions.h"
-#include "TauAnalysis/CandidateTools/interface/svFitAuxFunctions.h"
+#include "TauAnalysis/SVfit/interface/PFMEtSignInterface.h"
+#include "TauAnalysis/SVfit/interface/SVfitAlgorithmBase.h"
+#include "TauAnalysis/SVfit/interface/mTauTauMinAlgo.h"
+#include "TauAnalysis/SVfit/interface/candidateAuxFunctions.h"
+#include "TauAnalysis/SVfit/interface/generalAuxFunctions.h"
+#include "TauAnalysis/SVfit/interface/svFitAuxFunctions.h"
 
 #include "TMath.h"
 #include "TF1.h"
@@ -47,7 +47,7 @@ class CompositePtrCandidateT1T2MEtAlgorithm
       pfMEtCovInverse_(2, 2),
       timerTotal_(0),
       timerPFMEtSign_(0),
-      timerNSVFit_(0),
+      timerSVFit_(0),
       timerMTauTauMin_(0)
   {
     //std::cout << "<CompositePtrCandidateT1T2MEtAlgorithm::CompositePtrCandidateT1T2MEtAlgorithm>:" << std::endl;
@@ -59,28 +59,28 @@ class CompositePtrCandidateT1T2MEtAlgorithm
       pfMEtSign_ = new PFMEtSignInterface(cfgPFMEtSign);
     }
 
-    if ( cfg.exists("nSVfit") ) {
-      edm::ParameterSet cfgNSVfit = cfg.getParameter<edm::ParameterSet>("nSVfit");
-      std::vector<std::string> nSVfitAlgorithmNames = cfgNSVfit.getParameterNamesForType<edm::ParameterSet>();
-      for ( std::vector<std::string>::const_iterator nSVfitAlgorithmName = nSVfitAlgorithmNames.begin();
-	    nSVfitAlgorithmName != nSVfitAlgorithmNames.end(); ++nSVfitAlgorithmName ) {
-	edm::ParameterSet cfgNSVfitAlgorithm = cfgNSVfit.getParameter<edm::ParameterSet>(*nSVfitAlgorithmName);
-	edm::ParameterSet cfg_config = cfgNSVfitAlgorithm.getParameter<edm::ParameterSet>("config");
+    if ( cfg.exists("svFit") ) {
+      edm::ParameterSet cfgSVfit = cfg.getParameter<edm::ParameterSet>("svFit");
+      std::vector<std::string> svFitAlgorithmNames = cfgSVfit.getParameterNamesForType<edm::ParameterSet>();
+      for ( std::vector<std::string>::const_iterator svFitAlgorithmName = svFitAlgorithmNames.begin();
+	    svFitAlgorithmName != svFitAlgorithmNames.end(); ++svFitAlgorithmName ) {
+	edm::ParameterSet cfgSVfitAlgorithm = cfgSVfit.getParameter<edm::ParameterSet>(*svFitAlgorithmName);
+	edm::ParameterSet cfg_config = cfgSVfitAlgorithm.getParameter<edm::ParameterSet>("config");
 	edm::ParameterSet cfg_event = cfg_config.getParameter<edm::ParameterSet>("event");
-	edm::ParameterSet cfg_algorithm = cfgNSVfitAlgorithm.getParameter<edm::ParameterSet>("algorithm");
+	edm::ParameterSet cfg_algorithm = cfgSVfitAlgorithm.getParameter<edm::ParameterSet>("algorithm");
 	cfg_algorithm.addParameter<edm::ParameterSet>("event", cfg_event);
-	cfg_algorithm.addParameter<std::string>("pluginName", *nSVfitAlgorithmName);
+	cfg_algorithm.addParameter<std::string>("pluginName", *svFitAlgorithmName);
 	std::string pluginType = cfg_algorithm.getParameter<std::string>("pluginType");
-	NSVfitAlgorithmBase* nSVfitAlgorithm = NSVfitAlgorithmPluginFactory::get()->create(pluginType, cfg_algorithm);
+	SVfitAlgorithmBase* svFitAlgorithm = SVfitAlgorithmPluginFactory::get()->create(pluginType, cfg_algorithm);
         try {
-          nSVfitAlgorithms_.insert(std::pair<std::string, NSVfitAlgorithmBase*>(*nSVfitAlgorithmName, nSVfitAlgorithm));
+          svFitAlgorithms_.insert(std::pair<std::string, SVfitAlgorithmBase*>(*svFitAlgorithmName, svFitAlgorithm));
         } catch (...) {
-          edm::LogError("NSVFitConfigurationError") <<
-            "Caught exception when building NSVfit algorithm: "
-            << *nSVfitAlgorithmName  << std::endl;
+          edm::LogError("SVFitConfigurationError") <<
+            "Caught exception when building SVfit algorithm: "
+            << *svFitAlgorithmName  << std::endl;
           throw;
         }
-	//std::cout << "--> adding nSVfit algorithm: name = " << (*nSVfitAlgorithmName) << std::endl;
+	//std::cout << "--> adding svFit algorithm: name = " << (*svFitAlgorithmName) << std::endl;
       }
     }
 
@@ -103,8 +103,8 @@ class CompositePtrCandidateT1T2MEtAlgorithm
     //timerTotal_->Stop();
     //timerPFMEtSign_  = new TStopwatch();
     //timerPFMEtSign_->Stop();
-    //timerNSVFit_     = new TStopwatch();
-    //timerNSVFit_->Stop();
+    //timerSVFit_     = new TStopwatch();
+    //timerSVFit_->Stop();
     //timerMTauTauMin_ = new TStopwatch();
     //timerMTauTauMin_->Stop();
   }
@@ -113,8 +113,8 @@ class CompositePtrCandidateT1T2MEtAlgorithm
   {
     delete pfMEtSign_;
 
-    for ( typename std::map<std::string, NSVfitAlgorithmBase*>::iterator it = nSVfitAlgorithms_.begin();
-	  it != nSVfitAlgorithms_.end(); ++it ) {
+    for ( typename std::map<std::string, SVfitAlgorithmBase*>::iterator it = svFitAlgorithms_.begin();
+	  it != svFitAlgorithms_.end(); ++it ) {
       delete it->second;
     }
 
@@ -126,15 +126,15 @@ class CompositePtrCandidateT1T2MEtAlgorithm
     //	        << "/" << timerTotal_->CpuTime() << " seconds" << std::endl;
     //std::cout << " PFMEtSign: real/CPU time = " << timerPFMEtSign_->RealTime() 
     //	        << "/" << timerPFMEtSign_->CpuTime() << " seconds" << std::endl;
-    //std::cout << " nSVfit: real/CPU time = " << timerNSVFit_->RealTime() 
-    //	        << "/" << timerNSVFit_->CpuTime() << " seconds" << std::endl;
+    //std::cout << " svFit: real/CPU time = " << timerSVFit_->RealTime() 
+    //	        << "/" << timerSVFit_->CpuTime() << " seconds" << std::endl;
     //std::cout << " mTauTauMin: real/CPU time = " << timerMTauTauMin_->RealTime() 
     //	        << "/" << timerMTauTauMin_->CpuTime() << " seconds" << std::endl;
     //std::cout << std::endl;
 
     delete timerTotal_;
     delete timerPFMEtSign_;
-    delete timerNSVFit_;
+    delete timerSVFit_;
     delete timerMTauTauMin_;
   }
 
@@ -143,12 +143,12 @@ class CompositePtrCandidateT1T2MEtAlgorithm
     //timerTotal_->Start(false);
 
     if ( doSVreco ) {
-      //timerNSVFit_->Start(false);
-      for ( typename std::map<std::string, NSVfitAlgorithmBase*>::iterator nSVfitAlgorithm = nSVfitAlgorithms_.begin();
-	    nSVfitAlgorithm != nSVfitAlgorithms_.end(); ++nSVfitAlgorithm ) {
-	nSVfitAlgorithm->second->beginJob();
+      //timerSVFit_->Start(false);
+      for ( typename std::map<std::string, SVfitAlgorithmBase*>::iterator svFitAlgorithm = svFitAlgorithms_.begin();
+	    svFitAlgorithm != svFitAlgorithms_.end(); ++svFitAlgorithm ) {
+	svFitAlgorithm->second->beginJob();
       }
-      //timerNSVFit_->Stop();
+      //timerSVFit_->Stop();
     }
 
     //timerTotal_->Stop();
@@ -165,12 +165,12 @@ class CompositePtrCandidateT1T2MEtAlgorithm
     }
 
     if ( doSVreco ) {
-      //timerNSVFit_->Start(false);
-      for ( typename std::map<std::string, NSVfitAlgorithmBase*>::iterator nSVfitAlgorithm = nSVfitAlgorithms_.begin();
-	    nSVfitAlgorithm != nSVfitAlgorithms_.end(); ++nSVfitAlgorithm ) {
-	nSVfitAlgorithm->second->beginEvent(evt, es);
+      //timerSVFit_->Start(false);
+      for ( typename std::map<std::string, SVfitAlgorithmBase*>::iterator svFitAlgorithm = svFitAlgorithms_.begin();
+	    svFitAlgorithm != svFitAlgorithms_.end(); ++svFitAlgorithm ) {
+	svFitAlgorithm->second->beginEvent(evt, es);
       }
-      //timerNSVFit_->Stop();
+      //timerSVFit_->Stop();
     }
 
     //timerTotal_->Stop();
@@ -230,7 +230,7 @@ class CompositePtrCandidateT1T2MEtAlgorithm
 	  mTauTauMin(leg1->energy(), leg1->px(), leg1->py(), leg1->pz(),
 		     leg2->energy(), leg2->px(), leg2->py(), leg2->pz(),
 		     met->px(), met->py(),
-		     SVfit_namespace::tauLeptonMass);
+		     svFit_namespace::tauLeptonMass);
 	//timerMTauTauMin_->Stop();
 	if ( mTauTauMin_value > 0. ) {
 	  compositePtrCandidate.setTauPairMassMin(mTauTauMin_value);
@@ -258,28 +258,28 @@ class CompositePtrCandidateT1T2MEtAlgorithm
 
 //--- SV method computation (if we have the PV and beamspot)
       if ( doSVreco ) {
-	//timerNSVFit_->Start(false);
+	//timerSVFit_->Start(false);
 	if ( pv ) {
-	  for ( typename std::map<std::string, NSVfitAlgorithmBase*>::const_iterator nSVfitAlgorithm = nSVfitAlgorithms_.begin();
-		nSVfitAlgorithm != nSVfitAlgorithms_.end(); ++nSVfitAlgorithm ) {
-	    //std::cout << "--> running nSVfit algorithm: name = " << nSVfitAlgorithm->first << std::endl;
+	  for ( typename std::map<std::string, SVfitAlgorithmBase*>::const_iterator svFitAlgorithm = svFitAlgorithms_.begin();
+		svFitAlgorithm != svFitAlgorithms_.end(); ++svFitAlgorithm ) {
+	    //std::cout << "--> running svFit algorithm: name = " << svFitAlgorithm->first << std::endl;
 	    typedef edm::Ptr<reco::Candidate> CandidatePtr;
 	    typedef std::map<std::string, CandidatePtr> inputParticleMap;
 	    inputParticleMap inputParticles;
 	    inputParticles.insert(std::pair<std::string, CandidatePtr>("leg1", leg1));
 	    inputParticles.insert(std::pair<std::string, CandidatePtr>("leg2", leg2));
 	    inputParticles.insert(std::pair<std::string, CandidatePtr>("met",  met));
-	    std::auto_ptr<NSVfitEventHypothesisBase> nSVfitHypothesis(nSVfitAlgorithm->second->fit(inputParticles, pv));	    
-	    //nSVfitHypothesis->print(std::cout);
-	    assert(nSVfitHypothesis->numResonances() == 1);
-	    NSVfitResonanceHypothesisSummary nSVfitHypothesisSummary(*nSVfitHypothesis->resonance(0));
-	    nSVfitHypothesisSummary.setName(nSVfitAlgorithm->first);
-	    compositePtrCandidate.addNSVfitSolution(nSVfitHypothesisSummary);
-	    //compositePtrCandidate.nSVfitSolution(nSVfitAlgorithm->first)->print(std::cout);
+	    std::auto_ptr<SVfitEventHypothesisBase> svFitHypothesis(svFitAlgorithm->second->fit(inputParticles, pv));	    
+	    //svFitHypothesis->print(std::cout);
+	    assert(svFitHypothesis->numResonances() == 1);
+	    SVfitResonanceHypothesisSummary svFitHypothesisSummary(*svFitHypothesis->resonance(0));
+	    svFitHypothesisSummary.setName(svFitAlgorithm->first);
+	    compositePtrCandidate.addSVfitSolution(svFitHypothesisSummary);
+	    //compositePtrCandidate.svFitSolution(svFitAlgorithm->first)->print(std::cout);
 	    //std::cout << " done." << std::endl;
 	  }
 	}
-	//timerNSVFit_->Stop();
+	//timerSVFit_->Stop();
       }
     } else {
       compositePtrCandidate.setCollinearApproxQuantities(reco::Candidate::LorentzVector(0,0,0,0), -1, -1, false, 0);
@@ -515,9 +515,9 @@ class CompositePtrCandidateT1T2MEtAlgorithm
       //std::cout << "2nd eigen-vector: x = " << eigenVectors(0, 1) << ", y = " << eigenVectors(1, 1) << "," 
       //	  << " eigen-value = " << eigenValues(1) << std::endl;
 
-      double Vxx = SVfit_namespace::square(pfMEtCov_(0, 0));
-      double Vxy = SVfit_namespace::square(pfMEtCov_(1, 0));
-      double Vyy = SVfit_namespace::square(pfMEtCov_(1, 1));
+      double Vxx = svFit_namespace::square(pfMEtCov_(0, 0));
+      double Vxy = svFit_namespace::square(pfMEtCov_(1, 0));
+      double Vyy = svFit_namespace::square(pfMEtCov_(1, 1));
             
       pfMEtCovInverse_ = pfMEtCov_;
       pfMEtCovInverse_.Invert();
@@ -530,7 +530,7 @@ class CompositePtrCandidateT1T2MEtAlgorithm
       //pfMEtCovInverse_.Print();
      
       double alpha1 = (metPy*leg1y*Vxx - leg1x*metPy*Vxy - metPx*leg1y*Vxy + metPx*leg1x*Vyy)/
-	              (SVfit_namespace::square(leg1y)*Vxx - 2*leg1x*leg1y*Vxy + SVfit_namespace::square(leg1x)*Vyy);
+	              (svFit_namespace::square(leg1y)*Vxx - 2*leg1x*leg1y*Vxy + svFit_namespace::square(leg1x)*Vyy);
       double res1x = metPx;
       double res1y = metPy;
       if ( alpha1 > 0. ) {
@@ -544,7 +544,7 @@ class CompositePtrCandidateT1T2MEtAlgorithm
       //std::cout << "--> sig1 = " << sig1 << std::endl;
 
       double alpha2 = (metPy*leg2y*Vxx - metPy*leg2x*Vxy - metPx*leg2y*Vxy + metPx*leg2x*Vyy)/
-	              (SVfit_namespace::square(leg2y)*Vxx - 2*leg2x*leg2y*Vxy + SVfit_namespace::square(leg2x)*Vyy);
+	              (svFit_namespace::square(leg2y)*Vxx - 2*leg2x*leg2y*Vxy + svFit_namespace::square(leg2x)*Vyy);
       double res2x = metPx;
       double res2y = metPy;
       if ( alpha2 > 0. ) {
@@ -623,14 +623,14 @@ class CompositePtrCandidateT1T2MEtAlgorithm
   PFMEtSignInterface* pfMEtSign_;
   TMatrixD pfMEtCov_;
   TMatrixD pfMEtCovInverse_;
-  std::map<std::string, NSVfitAlgorithmBase*> nSVfitAlgorithms_;
+  std::map<std::string, SVfitAlgorithmBase*> svFitAlgorithms_;
   TF1* scaleFunc_;
   typedef std::vector<int> vint;
   vint genParticleMatchPdgId_;
 
   TStopwatch* timerTotal_;
   TStopwatch* timerPFMEtSign_;
-  TStopwatch* timerNSVFit_;
+  TStopwatch* timerSVFit_;
   TStopwatch* timerMTauTauMin_;
 };
 

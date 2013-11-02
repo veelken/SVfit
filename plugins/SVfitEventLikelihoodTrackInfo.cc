@@ -1,27 +1,27 @@
-#include "TauAnalysis/CandidateTools/plugins/NSVfitEventLikelihoodTrackInfo.h"
+#include "TauAnalysis/SVfit/plugins/SVfitEventLikelihoodTrackInfo.h"
 
-#include "TauAnalysis/CandidateTools/interface/NSVfitAlgorithmBase.h"
-#include "TauAnalysis/CandidateTools/interface/svFitAuxFunctions.h"
+#include "TauAnalysis/SVfit/interface/SVfitAlgorithmBase.h"
+#include "TauAnalysis/SVfit/interface/svFitAuxFunctions.h"
 
-using namespace SVfit_namespace;
+using namespace svFit_namespace;
 
-NSVfitEventLikelihoodTrackInfo::NSVfitEventLikelihoodTrackInfo(const edm::ParameterSet& cfg)
-  : NSVfitEventLikelihood(cfg)
+SVfitEventLikelihoodTrackInfo::SVfitEventLikelihoodTrackInfo(const edm::ParameterSet& cfg)
+  : SVfitEventLikelihood(cfg)
 {
 // nothing to be done yet...
 }
 
-NSVfitEventLikelihoodTrackInfo::~NSVfitEventLikelihoodTrackInfo()
+SVfitEventLikelihoodTrackInfo::~SVfitEventLikelihoodTrackInfo()
 {
 // nothing to be done yet...
 }
 
-void NSVfitEventLikelihoodTrackInfo::beginJob(NSVfitAlgorithmBase* algorithm)
+void SVfitEventLikelihoodTrackInfo::beginJob(SVfitAlgorithmBase* algorithm)
 {
-  if ( this->verbosity_ ) std::cout << "<NSVfitEventLikelihoodTrackInfo::beginJob>:" << std::endl;
-  algorithm->requestFitParameter("*", nSVfit_namespace::kPV_shiftX, pluginName_);
-  algorithm->requestFitParameter("*", nSVfit_namespace::kPV_shiftY, pluginName_);
-  algorithm->requestFitParameter("*", nSVfit_namespace::kPV_shiftZ, pluginName_);
+  if ( this->verbosity_ ) std::cout << "<SVfitEventLikelihoodTrackInfo::beginJob>:" << std::endl;
+  algorithm->requestFitParameter("*", svFit_namespace::kPV_shiftX, pluginName_);
+  algorithm->requestFitParameter("*", svFit_namespace::kPV_shiftY, pluginName_);
+  algorithm->requestFitParameter("*", svFit_namespace::kPV_shiftZ, pluginName_);
 }
 
 double Gaussian_input2(double residual2, double sigma2)
@@ -35,14 +35,14 @@ double Gaussian_input2(double residual2, double sigma2)
   }
 }
 
-double NSVfitEventLikelihoodTrackInfo::operator()(const NSVfitEventHypothesis* hypothesis) const
+double SVfitEventLikelihoodTrackInfo::operator()(const SVfitEventHypothesis* hypothesis) const
 {
 //--- compute probability for shift
 //    of primary event (tau lepton production) vertex position
 //    to be compatible with estimated covariance matrix,
 //    determined by vertex refit
 
-  if ( this->verbosity_ ) std::cout << "<NSVfitEventLikelihoodTrackInfo::operator()>:" << std::endl;
+  if ( this->verbosity_ ) std::cout << "<SVfitEventLikelihoodTrackInfo::operator()>:" << std::endl;
 
   double prob = 0.;
   if ( hypothesis->eventVertexIsValid() ) {
@@ -63,4 +63,4 @@ double NSVfitEventLikelihoodTrackInfo::operator()(const NSVfitEventHypothesis* h
 
 #include "FWCore/Framework/interface/MakerMacros.h"
 
-DEFINE_EDM_PLUGIN(NSVfitEventLikelihoodPluginFactory, NSVfitEventLikelihoodTrackInfo, "NSVfitEventLikelihoodTrackInfo");
+DEFINE_EDM_PLUGIN(SVfitEventLikelihoodPluginFactory, SVfitEventLikelihoodTrackInfo, "SVfitEventLikelihoodTrackInfo");

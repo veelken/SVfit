@@ -22,8 +22,8 @@
 
 #include "TauAnalysis/SVfit/interface/SVfitLikelihoodBase.h"
 
-#include "AnalysisDataFormats/TauAnalysis/interface/SVfitSingleParticleHypothesis.h"
-#include "AnalysisDataFormats/TauAnalysis/interface/SVfitResonanceHypothesis.h"
+#include "AnalysisDataFormats/SVfit/interface/SVfitSingleParticleHypothesis.h"
+#include "AnalysisDataFormats/SVfit/interface/SVfitResonanceHypothesis.h"
 
 #include <TF1.h>
 #include <TFormula.h>

@@ -4,7 +4,7 @@
 
 #include <TMath.h>
 
-using namespace SVfit_namespace;
+using namespace svFit_namespace;
 
 SVfitResonanceLikelihoodBreitWigner::SVfitResonanceLikelihoodBreitWigner(const edm::ParameterSet& cfg)
   : SVfitResonanceLikelihood(cfg)

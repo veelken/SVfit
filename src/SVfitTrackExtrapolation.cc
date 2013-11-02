@@ -5,7 +5,7 @@
 #include <TRotation.h>
 #include <TMath.h>
 
-using namespace SVfit_namespace;
+using namespace svFit_namespace;
 
 SVfitTrackExtrapolation::SVfitTrackExtrapolation(const reco::TransientTrack& transientTrack, const AlgebraicVector3& refPoint) 
   : errorFlag_(0) 

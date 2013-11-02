@@ -37,9 +37,9 @@ void SVfitTauDecayLikelihoodDummy<pat::Electron>::beginJob(SVfitAlgorithmBase* a
 {
   algorithm_ = algorithm;
   
-  algorithm->requestFitParameter(prodParticleLabel_, nSVfit_namespace::kTau_visEnFracX, pluginName_);
-  algorithm->requestFitParameter(prodParticleLabel_, nSVfit_namespace::kTau_phi_lab,    pluginName_);
-  algorithm->requestFitParameter(prodParticleLabel_, nSVfit_namespace::kTau_nuInvMass,  pluginName_);
+  algorithm->requestFitParameter(prodParticleLabel_, svFit_namespace::kTau_visEnFracX, pluginName_);
+  algorithm->requestFitParameter(prodParticleLabel_, svFit_namespace::kTau_phi_lab,    pluginName_);
+  algorithm->requestFitParameter(prodParticleLabel_, svFit_namespace::kTau_nuInvMass,  pluginName_);
 }
 
 template <>
@@ -47,9 +47,9 @@ void SVfitTauDecayLikelihoodDummy<pat::Muon>::beginJob(SVfitAlgorithmBase* algor
 {
   algorithm_ = algorithm;
 
-  algorithm->requestFitParameter(prodParticleLabel_, nSVfit_namespace::kTau_visEnFracX, pluginName_);
-  algorithm->requestFitParameter(prodParticleLabel_, nSVfit_namespace::kTau_phi_lab,    pluginName_);
-  algorithm->requestFitParameter(prodParticleLabel_, nSVfit_namespace::kTau_nuInvMass,  pluginName_);
+  algorithm->requestFitParameter(prodParticleLabel_, svFit_namespace::kTau_visEnFracX, pluginName_);
+  algorithm->requestFitParameter(prodParticleLabel_, svFit_namespace::kTau_phi_lab,    pluginName_);
+  algorithm->requestFitParameter(prodParticleLabel_, svFit_namespace::kTau_nuInvMass,  pluginName_);
 }
 
 template <>
@@ -57,8 +57,8 @@ void SVfitTauDecayLikelihoodDummy<pat::Tau>::beginJob(SVfitAlgorithmBase* algori
 {
   algorithm_ = algorithm;
 
-  algorithm->requestFitParameter(prodParticleLabel_, nSVfit_namespace::kTau_visEnFracX, pluginName_);
-  algorithm->requestFitParameter(prodParticleLabel_, nSVfit_namespace::kTau_phi_lab,    pluginName_);
+  algorithm->requestFitParameter(prodParticleLabel_, svFit_namespace::kTau_visEnFracX, pluginName_);
+  algorithm->requestFitParameter(prodParticleLabel_, svFit_namespace::kTau_phi_lab,    pluginName_);
 }
 
 //

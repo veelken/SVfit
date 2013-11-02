@@ -1,4 +1,4 @@
-#include "TauAnalysis/CandidateTools/plugins/NSVfitProducerT.h"
+#include "TauAnalysis/SVfit/plugins/SVfitProducerT.h"
 
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 
@@ -11,13 +11,13 @@
 #include "DataFormats/VertexReco/interface/Vertex.h"
 #include "DataFormats/Math/interface/deltaR.h"
 
-#include "TauAnalysis/CandidateTools/interface/IndepCombinatoricsGeneratorT.h"
+#include "TauAnalysis/SVfit/interface/IndepCombinatoricsGeneratorT.h"
 
 template<typename T>
-unsigned NSVfitProducerT<T>::instanceCounter_ = 0;
+unsigned SVfitProducerT<T>::instanceCounter_ = 0;
 
 template<typename T>
-NSVfitProducerT<T>::NSVfitProducerT(const edm::ParameterSet& cfg)
+SVfitProducerT<T>::SVfitProducerT(const edm::ParameterSet& cfg)
   : moduleLabel_(cfg.getParameter<std::string>("@module_label")),
     algorithm_(0),
     numInputParticles_(0),
@@ -54,7 +54,7 @@ NSVfitProducerT<T>::NSVfitProducerT(const edm::ParameterSet& cfg)
   edm::ParameterSet cfg_algorithm = cfg.getParameter<edm::ParameterSet>("algorithm");
   cfg_algorithm.addParameter<edm::ParameterSet>("event", cfg_event);
   std::string pluginType = cfg_algorithm.getParameter<std::string>("pluginType");
-  algorithm_ = NSVfitAlgorithmPluginFactory::get()->create(pluginType, cfg_algorithm);
+  algorithm_ = SVfitAlgorithmPluginFactory::get()->create(pluginType, cfg_algorithm);
   
   instanceLabel_ = cfg.exists("instanceLabel") ?
     cfg.getParameter<std::string>("instanceLabel") : "";
@@ -64,11 +64,11 @@ NSVfitProducerT<T>::NSVfitProducerT(const edm::ParameterSet& cfg)
   instanceId_ = instanceCounter_;
   ++instanceCounter_;
 
-  produces<NSVfitEventHypothesisCollection>(instanceLabel_);
+  produces<SVfitEventHypothesisCollection>(instanceLabel_);
 }
 
 template<typename T>
-NSVfitProducerT<T>::~NSVfitProducerT()
+SVfitProducerT<T>::~SVfitProducerT()
 {
   delete algorithm_;
   
@@ -76,15 +76,15 @@ NSVfitProducerT<T>::~NSVfitProducerT()
 }
 
 template<typename T>
-void NSVfitProducerT<T>::beginJob()
+void SVfitProducerT<T>::beginJob()
 {
   algorithm_->beginJob();
 }
  
 template <typename T>
-void NSVfitProducerT<T>::produce(edm::Event& evt, const edm::EventSetup& es)
+void SVfitProducerT<T>::produce(edm::Event& evt, const edm::EventSetup& es)
 {
-  //std::cout << "<NSVfitProducerT::produce>:" << std::endl;
+  //std::cout << "<SVfitProducerT::produce>:" << std::endl;
   //std::cout << " moduleLabel = " << moduleLabel_;
   //if ( instanceLabel_ != "" ) std::cout << ", instanceLabel = " << instanceLabel_;
   //std::cout << std::endl;
@@ -109,11 +109,11 @@ void NSVfitProducerT<T>::produce(edm::Event& evt, const edm::EventSetup& es)
 //--- check that there is exactly one MET object in the event
 //    (missing transverse momentum is an **event level** quantity)
   if ( metCollection->size() != 1 ) {
-    edm::LogError ("NSVfitProducer::produce") 
+    edm::LogError ("SVfitProducer::produce") 
       << " Found " << metCollection->size() << " MET objects in collection = " << srcMEt_ << ","
-      << " --> NSVfitEventHypothesis collection will NOT be produced !!";
-    std::auto_ptr<NSVfitEventHypothesisCollection> emptyNSVfitEventHypothesisCollection(new NSVfitEventHypothesisCollection());
-    evt.put(emptyNSVfitEventHypothesisCollection);
+      << " --> SVfitEventHypothesis collection will NOT be produced !!";
+    std::auto_ptr<SVfitEventHypothesisCollection> emptySVfitEventHypothesisCollection(new SVfitEventHypothesisCollection());
+    evt.put(emptySVfitEventHypothesisCollection);
     return;
   }
 
@@ -126,7 +126,7 @@ void NSVfitProducerT<T>::produce(edm::Event& evt, const edm::EventSetup& es)
 
   algorithm_->beginEvent(evt, es);
 
-  std::auto_ptr<NSVfitEventHypothesisCollection> nSVfitEventHypothesisCollection(new NSVfitEventHypothesisCollection());
+  std::auto_ptr<SVfitEventHypothesisCollection> nSVfitEventHypothesisCollection(new SVfitEventHypothesisCollection());
 
   IndepCombinatoricsGeneratorT<int> inputParticleCombination(numInputParticles_);
   for ( unsigned iParticleType = 0; iParticleType < numInputParticles_; ++iParticleType ) {
@@ -186,9 +186,9 @@ void NSVfitProducerT<T>::produce(edm::Event& evt, const edm::EventSetup& es)
 }
 
 template<typename T>
-void NSVfitProducerT<T>::endJob()
+void SVfitProducerT<T>::endJob()
 {
-  std::cout << "<NSVfitProducer::endJob>:" << std::endl;
+  std::cout << "<SVfitProducer::endJob>:" << std::endl;
   std::cout << " moduleLabel = " << moduleLabel_ << " (instance = #" << instanceId_ << ")" << std::endl;
   std::cout << " real/CPU time = " 
 	    << timer_->RealTime() << "/" 
@@ -200,18 +200,18 @@ void NSVfitProducerT<T>::endJob()
   std::cout << std::endl;
 }
 
-#include "AnalysisDataFormats/TauAnalysis/interface/NSVfitEventHypothesis.h"
-#include "AnalysisDataFormats/TauAnalysis/interface/NSVfitEventHypothesisByIntegration.h"
+#include "AnalysisDataFormats/SVfit/interface/SVfitEventHypothesis.h"
+#include "AnalysisDataFormats/SVfit/interface/SVfitEventHypothesisByIntegration.h"
 
-typedef NSVfitProducerT<NSVfitEventHypothesis> NSVfitProducer;
-typedef NSVfitProducerT<NSVfitEventHypothesisByIntegration> NSVfitProducerByIntegration;
-typedef NSVfitProducerT<NSVfitEventHypothesis> NSVfitProducerByIntegration2;
+typedef SVfitProducerT<SVfitEventHypothesis> SVfitProducer;
+typedef SVfitProducerT<SVfitEventHypothesisByIntegration> SVfitProducerByIntegration;
+typedef SVfitProducerT<SVfitEventHypothesis> SVfitProducerByIntegration2;
 
 #include "FWCore/Framework/interface/MakerMacros.h"
 
-DEFINE_FWK_MODULE(NSVfitProducer);
-DEFINE_FWK_MODULE(NSVfitProducerByIntegration);
-DEFINE_FWK_MODULE(NSVfitProducerByIntegration2);
+DEFINE_FWK_MODULE(SVfitProducer);
+DEFINE_FWK_MODULE(SVfitProducerByIntegration);
+DEFINE_FWK_MODULE(SVfitProducerByIntegration2);
 
 
 

@@ -24,7 +24,7 @@
 #include "TauAnalysis/SVfit/interface/SVfitTrackService.h"
 #include "TauAnalysis/SVfit/interface/SVfitDecayVertexFitter.h"
 
-#include "AnalysisDataFormats/TauAnalysis/interface/SVfitTauDecayHypothesis.h"
+#include "AnalysisDataFormats/SVfit/interface/SVfitTauDecayHypothesis.h"
 
 class SVfitSingleParticleHypothesis;
 class SVfitAlgorithmBase;

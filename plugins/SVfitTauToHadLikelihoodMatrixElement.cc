@@ -5,7 +5,7 @@
 #include "TauAnalysis/SVfit/interface/SVfitAlgorithmBase.h"
 #include "TauAnalysis/SVfit/interface/svFitAuxFunctions.h"
 
-#include "AnalysisDataFormats/TauAnalysis/interface/SVfitTauToHadHypothesis.h"
+#include "AnalysisDataFormats/SVfit/interface/SVfitTauToHadHypothesis.h"
 #include "DataFormats/PatCandidates/interface/Tau.h"
 #include "DataFormats/TauReco/interface/PFTau.h"
 
@@ -229,8 +229,8 @@ void SVfitTauToHadLikelihoodMatrixElement::beginJob(SVfitAlgorithmBase* algorith
 {
   algorithm_ = algorithm;
 
-  algorithm->requestFitParameter(prodParticleLabel_, nSVfit_namespace::kTau_visEnFracX, pluginName_);
-  algorithm->requestFitParameter(prodParticleLabel_, nSVfit_namespace::kTau_phi_lab,    pluginName_);
+  algorithm->requestFitParameter(prodParticleLabel_, svFit_namespace::kTau_visEnFracX, pluginName_);
+  algorithm->requestFitParameter(prodParticleLabel_, svFit_namespace::kTau_phi_lab,    pluginName_);
 }
 
 void SVfitTauToHadLikelihoodMatrixElement::beginCandidate(const SVfitSingleParticleHypothesis* hypothesis)

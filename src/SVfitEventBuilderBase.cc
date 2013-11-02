@@ -7,7 +7,7 @@
 
 #include "AnalysisDataFormats/SVfit/interface/SVfitTauDecayHypothesis.h"
 
-using namespace SVfit_namespace;
+using namespace svFit_namespace;
 
 SVfitEventBuilderBase::SVfitEventBuilderBase(const edm::ParameterSet& cfg)
   : SVfitBuilderBase(cfg),
@@ -55,9 +55,9 @@ void SVfitEventBuilderBase::beginJob(SVfitAlgorithmBase* algorithm)
     (*resonanceBuilder)->beginJob(algorithm);
   }
 
-  idxFitParameter_pvShiftX_ = getFitParameterIdx(algorithm, "*", nSVfit_namespace::kPV_shiftX, true); // optional parameter
-  idxFitParameter_pvShiftY_ = getFitParameterIdx(algorithm, "*", nSVfit_namespace::kPV_shiftY, true);
-  idxFitParameter_pvShiftZ_ = getFitParameterIdx(algorithm, "*", nSVfit_namespace::kPV_shiftZ, true);
+  idxFitParameter_pvShiftX_ = getFitParameterIdx(algorithm, "*", svFit_namespace::kPV_shiftX, true); // optional parameter
+  idxFitParameter_pvShiftY_ = getFitParameterIdx(algorithm, "*", svFit_namespace::kPV_shiftY, true);
+  idxFitParameter_pvShiftZ_ = getFitParameterIdx(algorithm, "*", svFit_namespace::kPV_shiftZ, true);
   doFitParameter_pvShift_ = (idxFitParameter_pvShiftX_ != -1 && idxFitParameter_pvShiftY_ != -1 && idxFitParameter_pvShiftZ_ != -1);
 
   // CV: always perform event vertex refit

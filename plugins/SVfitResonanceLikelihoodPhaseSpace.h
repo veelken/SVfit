@@ -13,9 +13,9 @@
 
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 
-#include "TauAnalysis/SVFit/interface/SVfitResonanceLikelihood.h"
+#include "TauAnalysis/SVfit/interface/SVfitResonanceLikelihood.h"
 
-#include "AnalysisDataFormats/TauAnalysis/interface/SVfitResonanceHypothesis.h"
+#include "AnalysisDataFormats/SVfit/interface/SVfitResonanceHypothesis.h"
 
 class SVfitResonanceLikelihoodPhaseSpace : public SVfitResonanceLikelihood
 {

@@ -1,7 +1,7 @@
-#ifndef TauAnalysis_CandidateTools_NSVfitEventLikelihoodMEt2_h
-#define TauAnalysis_CandidateTools_NSVfitEventLikelihoodMEt2_h
+#ifndef TauAnalysis_SVfit_SVfitEventLikelihoodMEt2_h
+#define TauAnalysis_SVfit_SVfitEventLikelihoodMEt2_h
 
-/** \class NSVfitEventLikelihoodMEt2
+/** \class SVfitEventLikelihoodMEt2
  *
  * Plugin for computing likelihood for neutrinos produced in tau lepton decays
  * to match missing transverse momentum reconstructed in the event
@@ -10,10 +10,6 @@
  * (CMS AN-10/400) to compute the likehood
  *
  * \author Christian Veelken, UC Davis
- *
- * \version $Revision: 1.12 $
- *
- * $Id: NSVfitEventLikelihoodMEt2.h,v 1.12 2013/02/22 16:38:35 veelken Exp $
  *
  */
 
@@ -27,10 +23,10 @@
 #include "DataFormats/JetReco/interface/PFJet.h"
 #include "DataFormats/JetReco/interface/PFJetCollection.h"
 
-#include "TauAnalysis/CandidateTools/interface/NSVfitEventLikelihood.h"
-#include "TauAnalysis/CandidateTools/interface/PFMEtSignInterface.h"
+#include "TauAnalysis/SVfit/interface/SVfitEventLikelihood.h"
+#include "TauAnalysis/SVfit/interface/PFMEtSignInterface.h"
 
-#include "AnalysisDataFormats/TauAnalysis/interface/NSVfitEventHypothesis.h"
+#include "AnalysisDataFormats/SVfit/interface/SVfitEventHypothesis.h"
 
 #include <TMatrixD.h>
 #include <TVectorD.h>
@@ -38,17 +34,17 @@
 
 #include <list>
 
-class NSVfitEventLikelihoodMEt2 : public NSVfitEventLikelihood
+class SVfitEventLikelihoodMEt2 : public SVfitEventLikelihood
 {
  public:
-  NSVfitEventLikelihoodMEt2(const edm::ParameterSet&);
-  ~NSVfitEventLikelihoodMEt2();
+  SVfitEventLikelihoodMEt2(const edm::ParameterSet&);
+  ~SVfitEventLikelihoodMEt2();
 
-  void beginJob(NSVfitAlgorithmBase*);
+  void beginJob(SVfitAlgorithmBase*);
   void beginEvent(const edm::Event&, const edm::EventSetup&);
-  void beginCandidate(const NSVfitEventHypothesis*) const;
+  void beginCandidate(const SVfitEventHypothesis*) const;
 
-  double operator()(const NSVfitEventHypothesis*) const;
+  double operator()(const SVfitEventHypothesis*) const;
 
  private:
 

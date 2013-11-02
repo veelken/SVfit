@@ -50,10 +50,10 @@ void SVfitTauToHadLikelihoodPhaseSpace::beginJob(SVfitAlgorithmBase* algorithm)
 {
   algorithm_ = algorithm;
 
-  algorithm->requestFitParameter(prodParticleLabel_,   nSVfit_namespace::kTau_visEnFracX, pluginName_);
-  algorithm->requestFitParameter(prodParticleLabel_,   nSVfit_namespace::kTau_phi_lab,    pluginName_);
+  algorithm->requestFitParameter(prodParticleLabel_,   svFit_namespace::kTau_visEnFracX, pluginName_);
+  algorithm->requestFitParameter(prodParticleLabel_,   svFit_namespace::kTau_phi_lab,    pluginName_);
   if ( applyVisMassFactor_ ) {
-    algorithm->requestFitParameter(prodParticleLabel_, nSVfit_namespace::kTau_visMass,    pluginName_);
+    algorithm->requestFitParameter(prodParticleLabel_, svFit_namespace::kTau_visMass,    pluginName_);
   }
 }
 

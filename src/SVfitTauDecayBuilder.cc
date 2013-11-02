@@ -76,11 +76,11 @@ void SVfitTauDecayBuilder::beginJob(SVfitAlgorithmBase* algorithm)
   algorithm_ = algorithm;
 
   // Map the fit parameters to indices.
-  idxFitParameter_visEnFracX_          = getFitParameterIdx(algorithm, prodParticleLabel_, nSVfit_namespace::kTau_visEnFracX);
-  idxFitParameter_phi_lab_             = getFitParameterIdx(algorithm, prodParticleLabel_, nSVfit_namespace::kTau_phi_lab);
-  idxFitParameter_visMass_             = getFitParameterIdx(algorithm, prodParticleLabel_, nSVfit_namespace::kTau_visMass, true);
-  idxFitParameter_nuInvMass_           = getFitParameterIdx(algorithm, prodParticleLabel_, nSVfit_namespace::kTau_nuInvMass, true);
-  idxFitParameter_decayDistance_shift_ = getFitParameterIdx(algorithm, prodParticleLabel_, nSVfit_namespace::kTau_decayDistance_lab_shift, true);
+  idxFitParameter_visEnFracX_          = getFitParameterIdx(algorithm, prodParticleLabel_, svFit_namespace::kTau_visEnFracX);
+  idxFitParameter_phi_lab_             = getFitParameterIdx(algorithm, prodParticleLabel_, svFit_namespace::kTau_phi_lab);
+  idxFitParameter_visMass_             = getFitParameterIdx(algorithm, prodParticleLabel_, svFit_namespace::kTau_visMass, true);
+  idxFitParameter_nuInvMass_           = getFitParameterIdx(algorithm, prodParticleLabel_, svFit_namespace::kTau_nuInvMass, true);
+  idxFitParameter_decayDistance_shift_ = getFitParameterIdx(algorithm, prodParticleLabel_, svFit_namespace::kTau_decayDistance_lab_shift, true);
 #ifdef SVFIT_DEBUG 
   if ( verbosity_ ) {
     std::cout << "<SVfitTauDecayBuilder::beginJob>:" << std::endl;
@@ -153,7 +153,7 @@ void SVfitTauDecayBuilder::initialize(SVfitTauDecayHypothesis* hypothesis, const
   if ( !nuSystemIsMassless() ) {
     SVfitParameter* fitParameter = algorithm_->getFitParameter(idxFitParameter_nuInvMass_);
     assert(fitParameter);
-    fitParameter->setUpperLimit(SVfit_namespace::tauLeptonMass - TMath::Min(hypothesis->visMass_, 1.6));
+    fitParameter->setUpperLimit(svFit_namespace::tauLeptonMass - TMath::Min(hypothesis->visMass_, 1.6));
     fitParameter->setInitialValue(0.5*(fitParameter->LowerLimit() + fitParameter->UpperLimit()));
   }
 

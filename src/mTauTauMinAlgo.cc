@@ -1,4 +1,4 @@
-#include "TauAnalysis/CandidateTools/interface/mTauTauMinAlgo.h"
+#include "TauAnalysis/SVfit/interface/mTauTauMinAlgo.h"
 
 #include "CLHEP/Random/RandFlat.h"
 

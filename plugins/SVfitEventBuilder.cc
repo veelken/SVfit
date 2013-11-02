@@ -1,18 +1,18 @@
-#include "TauAnalysis/CandidateTools/plugins/NSVfitEventBuilder.h"
+#include "TauAnalysis/SVfit/plugins/SVfitEventBuilder.h"
 
 #include "DataFormats/Common/interface/Handle.h"
 
-#include "TauAnalysis/CandidateTools/interface/NSVfitAlgorithmBase.h"
-#include "TauAnalysis/CandidateTools/interface/NSVfitParameter.h"
-#include "TauAnalysis/CandidateTools/interface/generalAuxFunctions.h"
-#include "TauAnalysis/CandidateTools/interface/svFitAuxFunctions.h"
+#include "TauAnalysis/SVfit/interface/SVfitAlgorithmBase.h"
+#include "TauAnalysis/SVfit/interface/SVfitParameter.h"
+#include "TauAnalysis/SVfit/interface/generalAuxFunctions.h"
+#include "TauAnalysis/SVfit/interface/svFitAuxFunctions.h"
 
 #include <TMath.h>
 
-using namespace SVfit_namespace;
+using namespace svFit_namespace;
 
-NSVfitEventBuilder::NSVfitEventBuilder(const edm::ParameterSet& cfg) 
-  : NSVfitEventBuilderBase(cfg),
+SVfitEventBuilder::SVfitEventBuilder(const edm::ParameterSet& cfg) 
+  : SVfitEventBuilderBase(cfg),
     algorithm_(0)
 {
   if ( cfg.exists("polStates") ) {
@@ -21,16 +21,16 @@ NSVfitEventBuilder::NSVfitEventBuilder(const edm::ParameterSet& cfg)
     for ( vstring::const_iterator polState_string = polStates_string.begin();
 	  polState_string != polStates_string.end(); ++polState_string ) {
       int polHandedness = -1;
-      if      ( (*polState_string) == "undefined" ) polHandedness = NSVfitEventHypothesis::kPolUndefined;
-      else if ( (*polState_string) == "WLWL"      ) polHandedness = NSVfitEventHypothesis::kPolWLWL;
-      else if ( (*polState_string) == "WRWR"      ) polHandedness = NSVfitEventHypothesis::kPolWRWR;
-      else if ( (*polState_string) == "WTWT"      ) polHandedness = NSVfitEventHypothesis::kPolWTWT;
-      else throw cms::Exception("NSVfitEventBuilder")
+      if      ( (*polState_string) == "undefined" ) polHandedness = SVfitEventHypothesis::kPolUndefined;
+      else if ( (*polState_string) == "WLWL"      ) polHandedness = SVfitEventHypothesis::kPolWLWL;
+      else if ( (*polState_string) == "WRWR"      ) polHandedness = SVfitEventHypothesis::kPolWRWR;
+      else if ( (*polState_string) == "WTWT"      ) polHandedness = SVfitEventHypothesis::kPolWTWT;
+      else throw cms::Exception("SVfitEventBuilder")
 	<< " Invalid Configuration Parameter 'polState' = " << (*polState_string) << " !!\n";
       polHandedness_.push_back(polHandedness);
     }
   } else {
-    polHandedness_.push_back(NSVfitEventHypothesis::kPolUndefined);
+    polHandedness_.push_back(SVfitEventHypothesis::kPolUndefined);
   }
   numPolStates_ = polHandedness_.size();
 
@@ -42,10 +42,10 @@ NSVfitEventBuilder::NSVfitEventBuilder(const edm::ParameterSet& cfg)
   }
 }
 
-void NSVfitEventBuilder::beginJob(NSVfitAlgorithmBase* algorithm)
+void SVfitEventBuilder::beginJob(SVfitAlgorithmBase* algorithm)
 {
   if ( verbosity_ ) {
-    std::cout << "<NSVfitEventBuilder::beginJob>:" << std::endl;
+    std::cout << "<SVfitEventBuilder::beginJob>:" << std::endl;
     std::cout << " pluginName = " << pluginName_ << std::endl;
     std::cout << " idxFitParameter_pvShiftX = " << idxFitParameter_pvShiftX_ << std::endl;
     std::cout << " idxFitParameter_pvShiftY = " << idxFitParameter_pvShiftY_ << std::endl;
@@ -54,7 +54,7 @@ void NSVfitEventBuilder::beginJob(NSVfitAlgorithmBase* algorithm)
 
   algorithm_ = algorithm;
 
-  NSVfitEventBuilderBase::beginJob(algorithm);
+  SVfitEventBuilderBase::beginJob(algorithm);
 
   if ( fixToGenVertex_ ) {
     if ( idxFitParameter_pvShiftX_ != -1 ) algorithm->fixFitParameter(idxFitParameter_pvShiftX_);
@@ -63,11 +63,11 @@ void NSVfitEventBuilder::beginJob(NSVfitAlgorithmBase* algorithm)
   }
 }
 
-void NSVfitEventBuilder::beginEvent(const edm::Event& evt, const edm::EventSetup& es)
+void SVfitEventBuilder::beginEvent(const edm::Event& evt, const edm::EventSetup& es)
 {
-  if ( verbosity_ ) std::cout << "<NSVfitEventBuilder::beginEvent>:" << std::endl;
+  if ( verbosity_ ) std::cout << "<SVfitEventBuilder::beginEvent>:" << std::endl;
 
-  NSVfitEventBuilderBase::beginEvent(evt, es);
+  SVfitEventBuilderBase::beginEvent(evt, es);
 
   if ( initializeToGenVertex_ ) {    
     edm::Handle<reco::Vertex> genVertex;
@@ -79,11 +79,11 @@ void NSVfitEventBuilder::beginEvent(const edm::Event& evt, const edm::EventSetup
   }
 }
 
-NSVfitEventHypothesis* NSVfitEventBuilder::build(const inputParticleMap& inputParticles, const reco::Vertex* eventVertex) const
+SVfitEventHypothesis* SVfitEventBuilder::build(const inputParticleMap& inputParticles, const reco::Vertex* eventVertex) const
 {
-  if ( verbosity_ ) std::cout << "<NSVfitEventBuilder::build>:" << std::endl;
+  if ( verbosity_ ) std::cout << "<SVfitEventBuilder::build>:" << std::endl;
 
-  NSVfitEventHypothesis* event = NSVfitEventBuilderBase::build(inputParticles, eventVertex);
+  SVfitEventHypothesis* event = SVfitEventBuilderBase::build(inputParticles, eventVertex);
 
   double initialShiftX = 0.;
   double initialShiftY = 0.;
@@ -102,7 +102,7 @@ NSVfitEventHypothesis* NSVfitEventBuilder::build(const inputParticleMap& inputPa
   event->eventVertexShift_(2) = initialShiftZ;
 
 //--- set fitParameter step-size according to estimated uncertainty on vertex position
-//   (event vertex position and uncertainty set in NSVfitEventBuilderBase class)
+//   (event vertex position and uncertainty set in SVfitEventBuilderBase class)
   if ( !fixToGenVertex_ ) {
     double vertexSigmaX = TMath::Sqrt(event->eventVertexCov().Diagonal()(0));
     algorithm_->setFitParameterLimit(idxFitParameter_pvShiftX_, initialShiftX - 10.*vertexSigmaX, initialShiftX + 10.*vertexSigmaX);
@@ -115,10 +115,10 @@ NSVfitEventHypothesis* NSVfitEventBuilder::build(const inputParticleMap& inputPa
     algorithm_->setFitParameterStepSize(idxFitParameter_pvShiftZ_, 0.25*vertexSigmaZ);
   }
 
-  for ( std::vector<NSVfitResonanceBuilderBase*>::const_iterator resonanceBuilder = resonanceBuilders_.begin();
+  for ( std::vector<SVfitResonanceBuilderBase*>::const_iterator resonanceBuilder = resonanceBuilders_.begin();
 	resonanceBuilder != resonanceBuilders_.end(); ++resonanceBuilder ) {
     int idx = lastBuiltResonances_[*resonanceBuilder];
-    NSVfitResonanceHypothesis* resonance = dynamic_cast<NSVfitResonanceHypothesis*>(&event->resonances_[idx]);
+    SVfitResonanceHypothesis* resonance = dynamic_cast<SVfitResonanceHypothesis*>(&event->resonances_[idx]);
     assert(resonance);
     (*resonanceBuilder)->finalize(resonance);
   }
@@ -129,15 +129,15 @@ NSVfitEventHypothesis* NSVfitEventBuilder::build(const inputParticleMap& inputPa
   //std::cout << "event: polHandedness = " << format_vint(event->polHandedness_) << std::endl;
 
 //--- set polarization status for daughters 
-  if ( event->numPolStates_ > 1 || (event->numPolStates_ == 1 && polHandedness_[0] != NSVfitEventHypothesis::kPolUndefined) ) {
+  if ( event->numPolStates_ > 1 || (event->numPolStates_ == 1 && polHandedness_[0] != SVfitEventHypothesis::kPolUndefined) ) {
     if ( event->numResonances() == 2 ) {
       for ( size_t iResonance = 0; iResonance < event->numResonances(); ++iResonance ) {
-	NSVfitResonanceHypothesis* resonance = event->resonance(iResonance);
+	SVfitResonanceHypothesis* resonance = event->resonance(iResonance);
 
-//--- check that polarization of resonance has not yet been defined by NSVfitResonanceBuilder plugin
-//   (in order not to overwrite polarization states defined by NSVfitResonanceBuilder plugin)
+//--- check that polarization of resonance has not yet been defined by SVfitResonanceBuilder plugin
+//   (in order not to overwrite polarization states defined by SVfitResonanceBuilder plugin)
 	if ( resonance->numPolStates_ != 1 )
-	  throw cms::Exception("NSVfitEventBuilder")
+	  throw cms::Exception("SVfitEventBuilder")
 	    << " Simultaneous support for Polarization on event and resonance level not implemented yet !!\n";
 
 	resonance->polHandedness_.resize(numPolStates_);
@@ -147,14 +147,14 @@ NSVfitEventHypothesis* NSVfitEventBuilder::build(const inputParticleMap& inputPa
 	for ( unsigned iPolState = 0; iPolState < numPolStates_; ++iPolState ) {
 	  int event_polHandedness = polHandedness_[iPolState];
 	  int resonance_polHandedness = -1;
-	  if ( event_polHandedness == NSVfitEventHypothesis::kPolUndefined ) {
-	    resonance_polHandedness = NSVfitResonanceHypothesis::kPolUndefined;
-	  } else if ( event_polHandedness == NSVfitEventHypothesis::kPolWLWL ) {
-	    resonance_polHandedness = NSVfitResonanceHypothesis::kPolWL;
-	  } else if ( event_polHandedness == NSVfitEventHypothesis::kPolWRWR ) {
-	    resonance_polHandedness = NSVfitResonanceHypothesis::kPolWR;
-	  } else if ( event_polHandedness == NSVfitEventHypothesis::kPolWTWT ) {
-	    resonance_polHandedness = NSVfitResonanceHypothesis::kPolWT;
+	  if ( event_polHandedness == SVfitEventHypothesis::kPolUndefined ) {
+	    resonance_polHandedness = SVfitResonanceHypothesis::kPolUndefined;
+	  } else if ( event_polHandedness == SVfitEventHypothesis::kPolWLWL ) {
+	    resonance_polHandedness = SVfitResonanceHypothesis::kPolWL;
+	  } else if ( event_polHandedness == SVfitEventHypothesis::kPolWRWR ) {
+	    resonance_polHandedness = SVfitResonanceHypothesis::kPolWR;
+	  } else if ( event_polHandedness == SVfitEventHypothesis::kPolWTWT ) {
+	    resonance_polHandedness = SVfitResonanceHypothesis::kPolWT;
 	  } 
 	  assert(resonance_polHandedness != -1);
 	  resonance->polHandedness_[iPolState] = resonance_polHandedness;
@@ -168,14 +168,14 @@ NSVfitEventHypothesis* NSVfitEventBuilder::build(const inputParticleMap& inputPa
 	  int resonance_polSign = 0;
 	  // CV: left-handed  W- and right-handed W+ are assigned polarization -1,
 	  //     right-handed W- and left-handed  W+ are assigned polarization +1
-	  if        ( resonance_polHandedness == NSVfitResonanceHypothesis::kPolWL        ) {
+	  if        ( resonance_polHandedness == SVfitResonanceHypothesis::kPolWL        ) {
 	    if      ( resonace_charge < -0.5 ) resonance_polSign = -1;
 	    else if ( resonace_charge > +0.5 ) resonance_polSign = +1;
-	  } else if ( resonance_polHandedness == NSVfitResonanceHypothesis::kPolWR        ) {
+	  } else if ( resonance_polHandedness == SVfitResonanceHypothesis::kPolWR        ) {
 	    if      ( resonace_charge < -0.5 ) resonance_polSign = +1;
 	    else if ( resonace_charge > +0.5 ) resonance_polSign = -1;
-	  } else if ( resonance_polHandedness == NSVfitResonanceHypothesis::kPolWT        ||
-		      resonance_polHandedness == NSVfitResonanceHypothesis::kPolUndefined ) {
+	  } else if ( resonance_polHandedness == SVfitResonanceHypothesis::kPolWT        ||
+		      resonance_polHandedness == SVfitResonanceHypothesis::kPolUndefined ) {
 	    resonance_polSign = 0;
 	  } else assert(0);
 	  resonance->polSign_[iPolState] = resonance_polSign;
@@ -184,7 +184,7 @@ NSVfitEventHypothesis* NSVfitEventBuilder::build(const inputParticleMap& inputPa
 	//std::cout << "resonance: polHandedness = " << format_vint(resonance->polHandedness_) << "," 
 	//	  << " polSign = " << format_vint(resonance->polSign_) << std::endl;
       }
-    } else throw cms::Exception("NSVfitEventBuilder")
+    } else throw cms::Exception("SVfitEventBuilder")
 	<< " Support for Polarization not implemented for case of " << event->numResonances() << " resonances yet !!\n";
   }
     
@@ -193,4 +193,4 @@ NSVfitEventHypothesis* NSVfitEventBuilder::build(const inputParticleMap& inputPa
 
 #include "FWCore/Framework/interface/MakerMacros.h"
 
-DEFINE_EDM_PLUGIN(NSVfitEventBuilderPluginFactory, NSVfitEventBuilder, "NSVfitEventBuilder");
+DEFINE_EDM_PLUGIN(SVfitEventBuilderPluginFactory, SVfitEventBuilder, "SVfitEventBuilder");

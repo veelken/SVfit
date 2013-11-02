@@ -1,37 +1,33 @@
-#ifndef TauAnalysis_CandidateTools_NSVfitEventLikelihoodMEt_h
-#define TauAnalysis_CandidateTools_NSVfitEventLikelihoodMEt_h
+#ifndef TauAnalysis_SVfit_SVfitEventLikelihoodMEt_h
+#define TauAnalysis_SVfit_SVfitEventLikelihoodMEt_h
 
-/** \class NSVfitEventLikelihoodMEt
+/** \class SVfitEventLikelihoodMEt
  *
  * Plugin for computing likelihood for neutrinos produced in tau lepton decays
  * to match missing transverse momentum reconstructed in the event
  *
  * \author Evan Friis, Christian Veelken; UC Davis
  *
- * \version $Revision: 1.3 $
- *
- * $Id: NSVfitEventLikelihoodMEt.h,v 1.3 2011/04/15 16:54:19 veelken Exp $
- *
  */
 
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 
-#include "TauAnalysis/CandidateTools/interface/NSVfitEventLikelihood.h"
+#include "TauAnalysis/SVfit/interface/SVfitEventLikelihood.h"
 
-#include "AnalysisDataFormats/TauAnalysis/interface/NSVfitEventHypothesis.h"
+#include "AnalysisDataFormats/SVfit/interface/SVfitEventHypothesis.h"
 
 #include <TFormula.h>
 
-class NSVfitEventLikelihoodMEt : public NSVfitEventLikelihood
+class SVfitEventLikelihoodMEt : public SVfitEventLikelihood
 {
  public:
-  NSVfitEventLikelihoodMEt(const edm::ParameterSet&);
-  ~NSVfitEventLikelihoodMEt();
+  SVfitEventLikelihoodMEt(const edm::ParameterSet&);
+  ~SVfitEventLikelihoodMEt();
 
-  void beginJob(NSVfitAlgorithmBase*) const;
-  void beginCandidate(const NSVfitEventHypothesis*) const;
+  void beginJob(SVfitAlgorithmBase*) const;
+  void beginCandidate(const SVfitEventHypothesis*) const;
 
-  double operator()(const NSVfitEventHypothesis*) const;
+  double operator()(const SVfitEventHypothesis*) const;
 
  private:
   double power_;

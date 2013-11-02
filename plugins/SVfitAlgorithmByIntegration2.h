@@ -1,5 +1,5 @@
-#ifndef TauAnalysis_CandidateTools_NSVfitAlgorithmByIntegration2_h
-#define TauAnalysis_CandidateTools_NSVfitAlgorithmByIntegration2_h
+#ifndef TauAnalysis_SVfit_SVfitAlgorithmByIntegration2_h
+#define TauAnalysis_SVfit_SVfitAlgorithmByIntegration2_h
 
 /** \class SVfitAlgorithmByIntegration2
  *
@@ -8,10 +8,6 @@
  * (based on Markov Chain integration algorithm)
  *
  * \author Christian Veelken, UC Davis
- *
- * \version $Revision: 1.7 $
- *
- * $Id: NSVfitAlgorithmByIntegration2.h,v 1.7 2013/04/12 16:00:14 veelken Exp $
  *
  */
 
@@ -24,9 +20,9 @@
 
 #include "CommonTools/Utils/interface/StringObjectFunction.h"
 
-#include "TauAnalysis/CandidateTools/interface/NSVfitAlgorithmBase.h"
-#include "TauAnalysis/CandidateTools/interface/MarkovChainIntegrator.h"
-#include "TauAnalysis/CandidateTools/interface/svFitAuxFunctions.h"
+#include "TauAnalysis/SVfit/interface/SVfitAlgorithmBase.h"
+#include "TauAnalysis/SVfit/interface/MarkovChainIntegrator.h"
+#include "TauAnalysis/SVfit/interface/svFitAuxFunctions.h"
 
 #include <Math/Functor.h>
 #include <TH1.h>
@@ -34,11 +30,11 @@
 #include <vector>
 #include <string>
 
-class NSVfitAlgorithmByIntegration2 : public NSVfitAlgorithmBase
+class SVfitAlgorithmByIntegration2 : public SVfitAlgorithmBase
 {
  public:
-  NSVfitAlgorithmByIntegration2(const edm::ParameterSet&);
-  ~NSVfitAlgorithmByIntegration2();
+  SVfitAlgorithmByIntegration2(const edm::ParameterSet&);
+  ~SVfitAlgorithmByIntegration2();
 
   void beginJob();
   void beginEvent(const edm::Event&, const edm::EventSetup&);
@@ -65,32 +61,32 @@ class NSVfitAlgorithmByIntegration2 : public NSVfitAlgorithmBase
 
   void fitImp() const;
 
-  void setMassResults(NSVfitResonanceHypothesisBase*, const TH1*) const;
+  void setMassResults(SVfitResonanceHypothesisBase*, const TH1*) const;
     
   bool isDaughter(const std::string&);
   bool isResonance(const std::string&);
 
   struct replaceParBase
   {
-    virtual void beginJob(NSVfitAlgorithmByIntegration2*) {}
+    virtual void beginJob(SVfitAlgorithmByIntegration2*) {}
     virtual double operator()(const double*) const = 0;
     int iPar_;
   };
 
   TFormula* makeReplacementFormula(const std::string&, const std::string&, std::vector<replaceParBase*>&, int&);
   
-  NSVfitParameter* getFitParameter(const std::string&);
+  SVfitParameter* getFitParameter(const std::string&);
   
-  struct NSVfitParameterMappingType
+  struct SVfitParameterMappingType
   {
-    NSVfitParameterMappingType(const NSVfitParameter* base)
+    SVfitParameterMappingType(const SVfitParameter* base)
       : base_(base)
     {}
-    const NSVfitParameter* base_;
+    const SVfitParameter* base_;
     int idxByIntegration_;
   };
 
-  std::vector<NSVfitParameterMappingType> fitParameterMappings_;
+  std::vector<SVfitParameterMappingType> fitParameterMappings_;
 
   edm::RunNumber_t currentRunNumber_;
   edm::LuminosityBlockNumber_t currentLumiSectionNumber_;
@@ -98,7 +94,7 @@ class NSVfitAlgorithmByIntegration2 : public NSVfitAlgorithmBase
 
   struct replaceParByFitParameter : replaceParBase
   {
-    void beginJob(NSVfitAlgorithmByIntegration2* algorithm)
+    void beginJob(SVfitAlgorithmByIntegration2* algorithm)
     {
       idx_ = algorithm->getFitParameter(fitParameterName_)->index();
     }
@@ -118,8 +114,8 @@ class NSVfitAlgorithmByIntegration2 : public NSVfitAlgorithmBase
     }
     double operator()(const double* param) const { return value_; }
     std::string resonanceName_;
-    NSVfitResonanceHypothesis* resonanceHypothesis_;
-    StringObjectFunction<NSVfitResonanceHypothesis>* valueExtractor_;
+    SVfitResonanceHypothesis* resonanceHypothesis_;
+    StringObjectFunction<SVfitResonanceHypothesis>* valueExtractor_;
     mutable double value_;
   };
 
@@ -142,9 +138,9 @@ class NSVfitAlgorithmByIntegration2 : public NSVfitAlgorithmBase
 	delete (*it);
       }
     }
-    void beginJob(NSVfitAlgorithmByIntegration2* algorithm)
+    void beginJob(SVfitAlgorithmByIntegration2* algorithm)
     {
-      NSVfitParameter* fitParameterToReplace = algorithm->getFitParameter(toReplace_);
+      SVfitParameter* fitParameterToReplace = algorithm->getFitParameter(toReplace_);
       if ( !fitParameterToReplace ) {
 	throw cms::Exception("fitParameterReplacementType::beginJob")
 	  << " No fitParameter of name = " << toReplace_ << " defined !!";
@@ -173,7 +169,7 @@ class NSVfitAlgorithmByIntegration2 : public NSVfitAlgorithmBase
 
   std::vector<fitParameterReplacementType*> fitParameterReplacements_;
 
-  std::vector<NSVfitParameterMappingType> constParameterMappings_;
+  std::vector<SVfitParameterMappingType> constParameterMappings_;
   unsigned numConstParameters_;
 
   ROOT::Math::Functor* integrand_;

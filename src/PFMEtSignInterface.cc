@@ -5,7 +5,7 @@
 #include "DataFormats/Common/interface/Handle.h"
 #include "DataFormats/Math/interface/deltaR.h"
 
-#include "TauAnalysis/CandidateTools/interface/svFitAuxFunctions.h"
+#include "TauAnalysis/SVfit/interface/svFitAuxFunctions.h"
 
 #include <TMath.h>
 #include <TVectorD.h>

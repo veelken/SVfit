@@ -1,12 +1,12 @@
-#include "TauAnalysis/CandidateTools/plugins/NSVfitResonanceBuilder.h"
+#include "TauAnalysis/SVfit/plugins/SVfitResonanceBuilder.h"
 
 #include "FWCore/Utilities/interface/Exception.h"
 
 #include <vector>
 #include <string>
 
-NSVfitResonanceBuilder::NSVfitResonanceBuilder(const edm::ParameterSet& cfg)
-  : NSVfitResonanceBuilderBase(cfg)
+SVfitResonanceBuilder::SVfitResonanceBuilder(const edm::ParameterSet& cfg)
+  : SVfitResonanceBuilderBase(cfg)
 {
   edm::ParameterSet cfg_daughters = cfg.getParameter<edm::ParameterSet>("daughters");
   typedef std::vector<std::string> vstring;
@@ -17,8 +17,8 @@ NSVfitResonanceBuilder::NSVfitResonanceBuilder(const edm::ParameterSet& cfg)
     edm::ParameterSet cfg_builder = cfg_daughter.getParameter<edm::ParameterSet>("builder");
     cfg_builder.addParameter<std::string>("prodParticleLabel", *daughterName);
     std::string pluginType = cfg_builder.getParameter<std::string>("pluginType");
-    NSVfitSingleParticleBuilderBase* daughterBuilder =
-      NSVfitSingleParticleBuilderPluginFactory::get()->create(pluginType, cfg_builder);
+    SVfitSingleParticleBuilderBase* daughterBuilder =
+      SVfitSingleParticleBuilderPluginFactory::get()->create(pluginType, cfg_builder);
     daughterBuilders_.push_back(daughterBuilder);
     ++numDaughterBuilders_;
   }
@@ -29,24 +29,24 @@ NSVfitResonanceBuilder::NSVfitResonanceBuilder(const edm::ParameterSet& cfg)
     for ( vstring::const_iterator polState_string = polStates_string.begin();
 	  polState_string != polStates_string.end(); ++polState_string ) {
       int polHandedness = -1;
-      if      ( (*polState_string) == "undefined" ) polHandedness = NSVfitResonanceHypothesis::kPolUndefined;
-      else if ( (*polState_string) == "LR"        ) polHandedness = NSVfitResonanceHypothesis::kPolLR;
-      else if ( (*polState_string) == "RL"        ) polHandedness = NSVfitResonanceHypothesis::kPolRL;
-      else if ( (*polState_string) == "LL"        ) polHandedness = NSVfitResonanceHypothesis::kPolLL;
-      else if ( (*polState_string) == "RR"        ) polHandedness = NSVfitResonanceHypothesis::kPolRR;
-      else throw cms::Exception("NSVfitResonanceBuilder")
+      if      ( (*polState_string) == "undefined" ) polHandedness = SVfitResonanceHypothesis::kPolUndefined;
+      else if ( (*polState_string) == "LR"        ) polHandedness = SVfitResonanceHypothesis::kPolLR;
+      else if ( (*polState_string) == "RL"        ) polHandedness = SVfitResonanceHypothesis::kPolRL;
+      else if ( (*polState_string) == "LL"        ) polHandedness = SVfitResonanceHypothesis::kPolLL;
+      else if ( (*polState_string) == "RR"        ) polHandedness = SVfitResonanceHypothesis::kPolRR;
+      else throw cms::Exception("SVfitResonanceBuilder")
 	<< " Invalid Configuration Parameter 'polState' = " << (*polState_string) << " !!\n";
       polHandedness_.push_back(polHandedness);
     }
   } else {
-    polHandedness_.push_back(NSVfitResonanceHypothesis::kPolUndefined);
+    polHandedness_.push_back(SVfitResonanceHypothesis::kPolUndefined);
   }
   numPolStates_ = polHandedness_.size();
 }
 
-NSVfitResonanceHypothesis* NSVfitResonanceBuilder::build(const inputParticleMap& inputParticles) const
+SVfitResonanceHypothesis* SVfitResonanceBuilder::build(const inputParticleMap& inputParticles) const
 {
-  NSVfitResonanceHypothesis* resonance = NSVfitResonanceBuilderBase::build(inputParticles);
+  SVfitResonanceHypothesis* resonance = SVfitResonanceBuilderBase::build(inputParticles);
 
 //--- set polarization status for resonance
   resonance->polHandedness_ = polHandedness_;
@@ -55,7 +55,7 @@ NSVfitResonanceHypothesis* NSVfitResonanceBuilder::build(const inputParticleMap&
 //--- set polarization status for daughters 
   if ( resonance->numDaughters() == 2 ) {
     for ( size_t iDaughter = 0; iDaughter < resonance->numDaughters(); ++iDaughter ) {
-      NSVfitSingleParticleHypothesis* daughter = resonance->daughter(iDaughter);
+      SVfitSingleParticleHypothesis* daughter = resonance->daughter(iDaughter);
 
       daughter->polHandedness_.resize(numPolStates_);
       daughter->polSign_.resize(numPolStates_);
@@ -64,18 +64,18 @@ NSVfitResonanceHypothesis* NSVfitResonanceBuilder::build(const inputParticleMap&
       for ( unsigned iPolState = 0; iPolState < numPolStates_; ++iPolState ) {
 	int resonance_polHandedness = polHandedness_[iPolState];
 	int daughter_polHandedness = -1;
-	if ( resonance_polHandedness == NSVfitResonanceHypothesis::kPolUndefined ) {
-	  daughter_polHandedness = NSVfitSingleParticleHypothesis::kPolUndefined;
-	} else if ( resonance_polHandedness == NSVfitResonanceHypothesis::kPolLR ) {
-	  if      ( iDaughter == 0 ) daughter_polHandedness = NSVfitSingleParticleHypothesis::kPolL;
-	  else if ( iDaughter == 1 ) daughter_polHandedness = NSVfitSingleParticleHypothesis::kPolR;
-	} else if ( resonance_polHandedness == NSVfitResonanceHypothesis::kPolRL ) {
-	  if      ( iDaughter == 0 ) daughter_polHandedness = NSVfitSingleParticleHypothesis::kPolL;
-	  else if ( iDaughter == 1 ) daughter_polHandedness = NSVfitSingleParticleHypothesis::kPolR;
-	} else if ( resonance_polHandedness == NSVfitResonanceHypothesis::kPolLL ) {
-	  daughter_polHandedness = NSVfitSingleParticleHypothesis::kPolL;
-	} else if ( resonance_polHandedness == NSVfitResonanceHypothesis::kPolRR ) {
-	  daughter_polHandedness = NSVfitSingleParticleHypothesis::kPolR;
+	if ( resonance_polHandedness == SVfitResonanceHypothesis::kPolUndefined ) {
+	  daughter_polHandedness = SVfitSingleParticleHypothesis::kPolUndefined;
+	} else if ( resonance_polHandedness == SVfitResonanceHypothesis::kPolLR ) {
+	  if      ( iDaughter == 0 ) daughter_polHandedness = SVfitSingleParticleHypothesis::kPolL;
+	  else if ( iDaughter == 1 ) daughter_polHandedness = SVfitSingleParticleHypothesis::kPolR;
+	} else if ( resonance_polHandedness == SVfitResonanceHypothesis::kPolRL ) {
+	  if      ( iDaughter == 0 ) daughter_polHandedness = SVfitSingleParticleHypothesis::kPolL;
+	  else if ( iDaughter == 1 ) daughter_polHandedness = SVfitSingleParticleHypothesis::kPolR;
+	} else if ( resonance_polHandedness == SVfitResonanceHypothesis::kPolLL ) {
+	  daughter_polHandedness = SVfitSingleParticleHypothesis::kPolL;
+	} else if ( resonance_polHandedness == SVfitResonanceHypothesis::kPolRR ) {
+	  daughter_polHandedness = SVfitSingleParticleHypothesis::kPolR;
 	} 
 	assert(daughter_polHandedness != -1);
 	daughter->polHandedness_[iPolState] = daughter_polHandedness;
@@ -83,26 +83,26 @@ NSVfitResonanceHypothesis* NSVfitResonanceBuilder::build(const inputParticleMap&
 	int daughter_polSign = 0;
 	// CV: left-handed  tau- and right-handed tau+ are assigned polarization -1,
 	//     right-handed tau- and left-handed  tau+ are assigned polarization +1
-	if        ( daughter_polHandedness == NSVfitSingleParticleHypothesis::kPolL ) {
+	if        ( daughter_polHandedness == SVfitSingleParticleHypothesis::kPolL ) {
 	  if      ( daughter->particle()->charge() < -0.5 ) daughter_polSign = -1;
 	  else if ( daughter->particle()->charge() > +0.5 ) daughter_polSign = +1;
-	} else if ( daughter_polHandedness == NSVfitSingleParticleHypothesis::kPolR ) {
+	} else if ( daughter_polHandedness == SVfitSingleParticleHypothesis::kPolR ) {
 	  if      ( daughter->particle()->charge() < -0.5 ) daughter_polSign = +1;
 	  else if ( daughter->particle()->charge() > +0.5 ) daughter_polSign = -1;
 	} 
 	daughter->polSign_[iPolState] = daughter_polSign;
       }
     }
-  } else if ( numPolStates_ == 1 && polHandedness_[0] == NSVfitResonanceHypothesis::kPolUndefined ) {
+  } else if ( numPolStates_ == 1 && polHandedness_[0] == SVfitResonanceHypothesis::kPolUndefined ) {
     for ( size_t iDaughter = 0; iDaughter < resonance->numDaughters(); ++iDaughter ) {
-      NSVfitSingleParticleHypothesis* daughter = resonance->daughter(iDaughter);
+      SVfitSingleParticleHypothesis* daughter = resonance->daughter(iDaughter);
       daughter->polHandedness_.resize(numPolStates_);
-      daughter->polHandedness_[0] = NSVfitSingleParticleHypothesis::kPolUndefined;
+      daughter->polHandedness_[0] = SVfitSingleParticleHypothesis::kPolUndefined;
       daughter->polSign_.resize(numPolStates_);
       daughter->polSign_[0] = 0;
       daughter->numPolStates_ = numPolStates_;
     }
-  } else throw cms::Exception("NSVfitResonanceBuilder")
+  } else throw cms::Exception("SVfitResonanceBuilder")
       << " Support for Polarization not implemented for case of " << resonance->numDaughters() << " daughters yet !!\n";
 
   return resonance;
@@ -110,4 +110,4 @@ NSVfitResonanceHypothesis* NSVfitResonanceBuilder::build(const inputParticleMap&
 
 #include "FWCore/Framework/interface/MakerMacros.h"
 
-DEFINE_EDM_PLUGIN(NSVfitResonanceBuilderPluginFactory, NSVfitResonanceBuilder, "NSVfitResonanceBuilder");
+DEFINE_EDM_PLUGIN(SVfitResonanceBuilderPluginFactory, SVfitResonanceBuilder, "SVfitResonanceBuilder");

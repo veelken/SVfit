@@ -1,5 +1,5 @@
-#ifndef TauAnalysis_SVfit_NSVfitAlgorithmBase_h
-#define TauAnalysis_SVfit_NSVfitAlgorithmBase_h
+#ifndef TauAnalysis_SVfit_SVfitAlgorithmBase_h
+#define TauAnalysis_SVfit_SVfitAlgorithmBase_h
 
 /** \class SVfitAlgorithmBase
  *
@@ -19,25 +19,25 @@
 #include "DataFormats/VertexReco/interface/Vertex.h"
 #include "DataFormats/Common/interface/Ptr.h"
 
-#include "TauAnalysis/SVfit/interface/NSVfitEventLikelihood.h"
-#include "TauAnalysis/SVfit/interface/NSVfitResonanceLikelihood.h"
-#include "TauAnalysis/SVfit/interface/NSVfitSingleParticleLikelihood.h"
-#include "TauAnalysis/SVfit/interface/NSVfitEventBuilderBase.h"
-#include "TauAnalysis/SVfit/interface/NSVfitParameter.h"
-#include "TauAnalysis/SVfit/interface/NSVfitTrackService.h"
+#include "TauAnalysis/SVfit/interface/SVfitEventLikelihood.h"
+#include "TauAnalysis/SVfit/interface/SVfitResonanceLikelihood.h"
+#include "TauAnalysis/SVfit/interface/SVfitSingleParticleLikelihood.h"
+#include "TauAnalysis/SVfit/interface/SVfitEventBuilderBase.h"
+#include "TauAnalysis/SVfit/interface/SVfitParameter.h"
+#include "TauAnalysis/SVfit/interface/SVfitTrackService.h"
 
-#include "AnalysisDataFormats/SVfit/interface/NSVfitEventHypothesis.h"
-#include "AnalysisDataFormats/SVfit/interface/NSVfitResonanceHypothesis.h"
-#include "AnalysisDataFormats/SVfit/interface/NSVfitSingleParticleHypothesis.h"
+#include "AnalysisDataFormats/SVfit/interface/SVfitEventHypothesis.h"
+#include "AnalysisDataFormats/SVfit/interface/SVfitResonanceHypothesis.h"
+#include "AnalysisDataFormats/SVfit/interface/SVfitSingleParticleHypothesis.h"
 
 #include <vector>
 #include <string>
 
-class NSVfitAlgorithmBase
+class SVfitAlgorithmBase
 {
  public:
-  NSVfitAlgorithmBase(const edm::ParameterSet&);
-  virtual ~NSVfitAlgorithmBase();
+  SVfitAlgorithmBase(const edm::ParameterSet&);
+  virtual ~SVfitAlgorithmBase();
 
   virtual void beginJob();
   virtual void beginEvent(const edm::Event&, const edm::EventSetup&);
@@ -46,8 +46,8 @@ class NSVfitAlgorithmBase
   virtual void fixFitParameter(int);
 
   virtual unsigned getNumFitParameter(const std::string&) const;
-  virtual NSVfitParameter* getFitParameter(const std::string&, int) const;
-  virtual NSVfitParameter* getFitParameter(int) const;
+  virtual SVfitParameter* getFitParameter(const std::string&, int) const;
+  virtual SVfitParameter* getFitParameter(int) const;
 
   virtual void setFitParameterInitialValue(int, double);
   virtual void setFitParameterLimit(int, double, double);
@@ -57,26 +57,26 @@ class NSVfitAlgorithmBase
 
   virtual void print(std::ostream&) const {}
 
-  // NOTE: fit method creates a new object of type NSVfitEventHypothesisBase (or derrived class);
+  // NOTE: fit method creates a new object of type SVfitEventHypothesisBase (or derrived class);
   //       ownership of this object is held by calling code
   //      --> calling code needs to take-care of deleting this object, in order to avoid memory leak
   typedef edm::Ptr<reco::Candidate> CandidatePtr;
   typedef std::map<std::string, CandidatePtr> inputParticleMap;
-  virtual NSVfitEventHypothesisBase* fit(const inputParticleMap&, const reco::Vertex*) const;
+  virtual SVfitEventHypothesisBase* fit(const inputParticleMap&, const reco::Vertex*) const;
 
   virtual bool update(const double* x, const double* param) const;
   virtual double nll(const double* x, const double* param) const;
 
-  static const NSVfitAlgorithmBase* gNSVfitAlgorithm;
+  static const SVfitAlgorithmBase* gSVfitAlgorithm;
 
-  const NSVfitEventHypothesis* currentEventHypothesis() const { return currentEventHypothesis_; }
+  const SVfitEventHypothesis* currentEventHypothesis() const { return currentEventHypothesis_; }
 
-  friend class NSVfitTauLikelihoodTrackInfo;
+  friend class SVfitTauLikelihoodTrackInfo;
 
  protected:
   virtual void fitImp() const = 0;
 
-  void setMassResults(NSVfitResonanceHypothesisBase*, double, double, double) const;
+  void setMassResults(SVfitResonanceHypothesisBase*, double, double, double) const;
 
   std::string pluginName_;
   std::string pluginType_;
@@ -84,7 +84,7 @@ class NSVfitAlgorithmBase
   struct daughterModelType
   {
     daughterModelType(const std::string& daughterName, const edm::ParameterSet& cfg,
-		      std::vector<NSVfitLikelihoodBase*>& allLikelihoods)
+		      std::vector<SVfitLikelihoodBase*>& allLikelihoods)
       : daughterName_(daughterName),
 	prodParticleLabel_(cfg.getParameter<std::string>("prodParticleLabel"))
     {
@@ -95,8 +95,8 @@ class NSVfitAlgorithmBase
 	      cfg_likelihood != cfg_likelihoods.end(); ++cfg_likelihood ) {
 	  cfg_likelihood->addParameter<std::string>("prodParticleLabel", prodParticleLabel_);
 	  std::string pluginType = cfg_likelihood->getParameter<std::string>("pluginType");
-	  NSVfitSingleParticleLikelihood* likelihood =
-  	    NSVfitSingleParticleLikelihoodPluginFactory::get()->create(pluginType, *cfg_likelihood);
+	  SVfitSingleParticleLikelihood* likelihood =
+  	    SVfitSingleParticleLikelihoodPluginFactory::get()->create(pluginType, *cfg_likelihood);
 	  likelihoods_.push_back(likelihood);
 	  allLikelihoods.push_back(likelihood);
 	}
@@ -104,22 +104,22 @@ class NSVfitAlgorithmBase
     }
     ~daughterModelType()
     {
-      for ( std::vector<NSVfitSingleParticleLikelihood*>::iterator it = likelihoods_.begin();
+      for ( std::vector<SVfitSingleParticleLikelihood*>::iterator it = likelihoods_.begin();
 	    it != likelihoods_.end(); ++it ) {
 	delete (*it);
       }
     }
-    void beginCandidate(const NSVfitSingleParticleHypothesis* hypothesis)
+    void beginCandidate(const SVfitSingleParticleHypothesis* hypothesis)
     {
-      for ( std::vector<NSVfitSingleParticleLikelihood*>::const_iterator likelihood = likelihoods_.begin();
+      for ( std::vector<SVfitSingleParticleLikelihood*>::const_iterator likelihood = likelihoods_.begin();
 	    likelihood != likelihoods_.end(); ++likelihood ) {
 	(*likelihood)->beginCandidate(hypothesis);
       }
     }
-    double prob(const NSVfitSingleParticleHypothesis* hypothesis, int idxPolState) const
+    double prob(const SVfitSingleParticleHypothesis* hypothesis, int idxPolState) const
     {
       double retVal = 1.;
-      for ( std::vector<NSVfitSingleParticleLikelihood*>::const_iterator likelihood = likelihoods_.begin();
+      for ( std::vector<SVfitSingleParticleLikelihood*>::const_iterator likelihood = likelihoods_.begin();
 	    likelihood != likelihoods_.end(); ++likelihood ) {
 	retVal *= (**likelihood)(hypothesis, hypothesis->polSign(idxPolState));
       }
@@ -127,13 +127,13 @@ class NSVfitAlgorithmBase
     }
     std::string daughterName_;
     std::string prodParticleLabel_;
-    std::vector<NSVfitSingleParticleLikelihood*> likelihoods_;
+    std::vector<SVfitSingleParticleLikelihood*> likelihoods_;
   };
 
   struct resonanceModelType
   {
     resonanceModelType(const std::string& resonanceName, const edm::ParameterSet& cfg,
-		       std::vector<NSVfitLikelihoodBase*>& allLikelihoods)
+		       std::vector<SVfitLikelihoodBase*>& allLikelihoods)
       : resonanceName_(resonanceName)
     {
       if ( cfg.exists("likelihoodFunctions") ) {
@@ -142,8 +142,8 @@ class NSVfitAlgorithmBase
         for ( vParameterSet::const_iterator cfg_likelihood = cfg_likelihoods.begin();
 	      cfg_likelihood != cfg_likelihoods.end(); ++cfg_likelihood ) {
   	  std::string pluginType = cfg_likelihood->getParameter<std::string>("pluginType");
-	  NSVfitResonanceLikelihood* likelihood =
-	    NSVfitResonanceLikelihoodPluginFactory::get()->create(pluginType, *cfg_likelihood);
+	  SVfitResonanceLikelihood* likelihood =
+	    SVfitResonanceLikelihoodPluginFactory::get()->create(pluginType, *cfg_likelihood);
 	    likelihoods_.push_back(likelihood);
 	    allLikelihoods.push_back(likelihood);
         }
@@ -162,7 +162,7 @@ class NSVfitAlgorithmBase
     }
     ~resonanceModelType()
     {
-      for ( std::vector<NSVfitResonanceLikelihood*>::iterator it = likelihoods_.begin();
+      for ( std::vector<SVfitResonanceLikelihood*>::iterator it = likelihoods_.begin();
 	    it != likelihoods_.end(); ++it ) {
 	delete (*it);
       }
@@ -171,9 +171,9 @@ class NSVfitAlgorithmBase
 	delete (*it);
       }
     }
-    void beginCandidate(const NSVfitResonanceHypothesis* hypothesis)
+    void beginCandidate(const SVfitResonanceHypothesis* hypothesis)
     {
-      for ( std::vector<NSVfitResonanceLikelihood*>::const_iterator likelihood = likelihoods_.begin();
+      for ( std::vector<SVfitResonanceLikelihood*>::const_iterator likelihood = likelihoods_.begin();
 	    likelihood != likelihoods_.end(); ++likelihood ) {
 	(*likelihood)->beginCandidate(hypothesis);
       }
@@ -182,10 +182,10 @@ class NSVfitAlgorithmBase
 	daughters_[iDaughter]->beginCandidate(hypothesis->daughter(iDaughter));
       }
     }
-    double prob(const NSVfitResonanceHypothesis* hypothesis, int idxPolState) const
+    double prob(const SVfitResonanceHypothesis* hypothesis, int idxPolState) const
     {
       double retVal = 1.;
-      for ( std::vector<NSVfitResonanceLikelihood*>::const_iterator likelihood = likelihoods_.begin();
+      for ( std::vector<SVfitResonanceLikelihood*>::const_iterator likelihood = likelihoods_.begin();
 	    likelihood != likelihoods_.end(); ++likelihood ) {
 	retVal *= (**likelihood)(hypothesis, hypothesis->polHandedness(idxPolState));
       }
@@ -196,19 +196,19 @@ class NSVfitAlgorithmBase
       return retVal;
     }
     std::string resonanceName_;
-    std::vector<NSVfitResonanceLikelihood*> likelihoods_;
+    std::vector<SVfitResonanceLikelihood*> likelihoods_;
     std::vector<daughterModelType*> daughters_;
     unsigned numDaughters_;
   };
 
   struct eventModelType
   {
-    eventModelType(const edm::ParameterSet& cfg, std::vector<NSVfitLikelihoodBase*>& allLikelihoods)
+    eventModelType(const edm::ParameterSet& cfg, std::vector<SVfitLikelihoodBase*>& allLikelihoods)
     {
       edm::ParameterSet cfg_builder = cfg.getParameter<edm::ParameterSet>("builder");
       cfg_builder.addParameter<edm::ParameterSet>("resonances", cfg.getParameter<edm::ParameterSet>("resonances"));
       std::string pluginType_builder = cfg_builder.getParameter<std::string>("pluginType");
-      builder_ = NSVfitEventBuilderPluginFactory::get()->create(pluginType_builder, cfg_builder);
+      builder_ = SVfitEventBuilderPluginFactory::get()->create(pluginType_builder, cfg_builder);
 
       if ( cfg.exists("likelihoodFunctions") ) {
 	typedef std::vector<edm::ParameterSet> vParameterSet;
@@ -216,8 +216,8 @@ class NSVfitAlgorithmBase
 	for ( vParameterSet::const_iterator cfg_likelihood = cfg_likelihoods.begin();
 	      cfg_likelihood != cfg_likelihoods.end(); ++cfg_likelihood ) {
 	  std::string pluginType = cfg_likelihood->getParameter<std::string>("pluginType");
-	  NSVfitEventLikelihood* likelihood =
-  	    NSVfitEventLikelihoodPluginFactory::get()->create(pluginType, *cfg_likelihood);
+	  SVfitEventLikelihood* likelihood =
+  	    SVfitEventLikelihoodPluginFactory::get()->create(pluginType, *cfg_likelihood);
 	  likelihoods_.push_back(likelihood);
 	  allLikelihoods.push_back(likelihood);
 	}
@@ -236,7 +236,7 @@ class NSVfitAlgorithmBase
     ~eventModelType()
     {
       delete builder_;
-      for ( std::vector<NSVfitEventLikelihood*>::iterator it = likelihoods_.begin();
+      for ( std::vector<SVfitEventLikelihood*>::iterator it = likelihoods_.begin();
 	    it != likelihoods_.end(); ++it ) {
 	delete (*it);
       }
@@ -245,9 +245,9 @@ class NSVfitAlgorithmBase
 	delete (*it);
       }
     }
-    void beginCandidate(const NSVfitEventHypothesis* hypothesis)
+    void beginCandidate(const SVfitEventHypothesis* hypothesis)
     {
-      for ( std::vector<NSVfitEventLikelihood*>::const_iterator likelihood = likelihoods_.begin();
+      for ( std::vector<SVfitEventLikelihood*>::const_iterator likelihood = likelihoods_.begin();
 	    likelihood != likelihoods_.end(); ++likelihood ) {
 	(*likelihood)->beginCandidate(hypothesis);
       }
@@ -256,10 +256,10 @@ class NSVfitAlgorithmBase
 	resonances_[iResonance]->beginCandidate(hypothesis->resonance(iResonance));
       }
     }
-    double nll(const NSVfitEventHypothesis* hypothesis) const
+    double nll(const SVfitEventHypothesis* hypothesis) const
     {
       double prob = 1.;
-      for ( std::vector<NSVfitEventLikelihood*>::const_iterator likelihood = likelihoods_.begin();
+      for ( std::vector<SVfitEventLikelihood*>::const_iterator likelihood = likelihoods_.begin();
 	    likelihood != likelihoods_.end(); ++likelihood ) {
 	prob *= (**likelihood)(hypothesis);
       }
@@ -268,7 +268,7 @@ class NSVfitAlgorithmBase
       unsigned numPolStates_event = hypothesis->numPolStates();
       if ( numPolStates_event == 1 ) { // Htautau and WH case
 	for ( unsigned iResonance = 0; iResonance < numResonances_; ++iResonance ) {
-	  const NSVfitResonanceHypothesis* resonance_hypothesis = hypothesis->resonance(iResonance);
+	  const SVfitResonanceHypothesis* resonance_hypothesis = hypothesis->resonance(iResonance);
 	  unsigned numPolStates_resonance = resonance_hypothesis->numPolStates();
 	  if ( numPolStates_resonance == 1 ) {          
 	    prob *= resonances_[iResonance]->prob(resonance_hypothesis, 0);
@@ -290,7 +290,7 @@ class NSVfitAlgorithmBase
 	  //std::cout << "idxPolState = " << idxPolState << ":" << std::endl;
 	  double prob_pol = 1.;
 	  for ( unsigned iResonance = 0; iResonance < numResonances_; ++iResonance ) {
-	    const NSVfitResonanceHypothesis* resonance_hypothesis = hypothesis->resonance(iResonance);
+	    const SVfitResonanceHypothesis* resonance_hypothesis = hypothesis->resonance(iResonance);
 	    unsigned numPolStates_resonance = resonance_hypothesis->numPolStates();
 	    assert(numPolStates_resonance == numPolStates_event);
 	    prob_pol *= resonances_[iResonance]->prob(resonance_hypothesis, idxPolState);
@@ -307,25 +307,25 @@ class NSVfitAlgorithmBase
       else retVal = std::numeric_limits<float>::max();
       return retVal;
     }
-    NSVfitEventBuilderBase* builder_;
-    std::vector<NSVfitEventLikelihood*> likelihoods_;
+    SVfitEventBuilderBase* builder_;
+    std::vector<SVfitEventLikelihood*> likelihoods_;
     std::vector<resonanceModelType*> resonances_;
     unsigned numResonances_;
   };
 
   eventModelType* eventModel_;
 
-  std::vector<NSVfitLikelihoodBase*> allLikelihoods_; // list of all event, resonance and single particle likelihood plugins
-                                                      // NOTE: plugins in list are **not** owned by NSVfitAlgorithmBase
+  std::vector<SVfitLikelihoodBase*> allLikelihoods_; // list of all event, resonance and single particle likelihood plugins
+                                                     // NOTE: plugins in list are **not** owned by SVfitAlgorithmBase
 
-  edm::Service<NSVfitTrackService> trackService_;
+  edm::Service<SVfitTrackService> trackService_;
   const edm::EventSetup* currentEventSetup_;
-  mutable NSVfitEventHypothesis* currentEventHypothesis_;
+  mutable SVfitEventHypothesis* currentEventHypothesis_;
   mutable bool currentEventHypothesis_isValidSolution_;
-  mutable NSVfitEventHypothesisBase* fittedEventHypothesis_;
+  mutable SVfitEventHypothesisBase* fittedEventHypothesis_;
   mutable double fittedEventHypothesis_nll_;
 
-  mutable std::vector<NSVfitParameter> fitParameters_;
+  mutable std::vector<SVfitParameter> fitParameters_;
   int fitParameterCounter_;
 
   int verbosity_;
@@ -333,7 +333,7 @@ class NSVfitAlgorithmBase
 
 #include "FWCore/PluginManager/interface/PluginFactory.h"
 
-typedef edmplugin::PluginFactory<NSVfitAlgorithmBase* (const edm::ParameterSet&)> NSVfitAlgorithmPluginFactory;
+typedef edmplugin::PluginFactory<SVfitAlgorithmBase* (const edm::ParameterSet&)> SVfitAlgorithmPluginFactory;
 
 #endif
 

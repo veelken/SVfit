@@ -103,7 +103,7 @@ bool SVfitResonanceBuilderBase::applyFitParameter(SVfitResonanceHypothesis* reso
 
   if ( numDaughters == 2 ) {
     const SVfitSingleParticleHypothesis* daughter1 = resonance->daughter(0);
-    resonance->prod_angle_rf_ = SVfit_namespace::gjAngleFromLabMomenta(resonance->p4_fitted(), daughter1->p4_fitted());
+    resonance->prod_angle_rf_ = svFit_namespace::gjAngleFromLabMomenta(resonance->p4_fitted(), daughter1->p4_fitted());
   }
 
   resonance->isValidSolution_ = isValidSolution;

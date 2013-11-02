@@ -1,4 +1,4 @@
-#include "TauAnalysis/CandidateTools/interface/svFitLikelihoodDisplayAuxFunctions.h"
+#include "TauAnalysis/SVfit/interface/svFitLikelihoodDisplayAuxFunctions.h"
 
 #include "FWCore/Utilities/interface/Exception.h"
 
@@ -15,15 +15,15 @@
 #include "DataFormats/Math/interface/angle.h"
 #include "DataFormats/Math/interface/deltaR.h"
 
-#include "TauAnalysis/CandidateTools/interface/candidateAuxFunctions.h"
-#include "TauAnalysis/CandidateTools/interface/SVfitTrackExtrapolation.h"
-#include "TauAnalysis/CandidateTools/interface/svFitAuxFunctions.h"
+#include "TauAnalysis/SVfit/interface/candidateAuxFunctions.h"
+#include "TauAnalysis/SVfit/interface/SVfitTrackExtrapolation.h"
+#include "TauAnalysis/SVfit/interface/svFitAuxFunctions.h"
 
 #include <TMath.h>
 
 #include <iomanip>
 
-using namespace SVfit_namespace;
+using namespace svFit_namespace;
 
 reco::Candidate::LorentzVector compFlightP4(const AlgebraicVector3& p3, double mass)
 {
@@ -78,9 +78,9 @@ namespace
     
     reco::Candidate::Vector u_perp = compCrossProduct(normal_to_plane, u_parl);
     
-    double pVis_parl = SVfit_namespace::compScalarProduct(p3Vis, u_parl);
+    double pVis_parl = svFit_namespace::compScalarProduct(p3Vis, u_parl);
     double pVis_parl2 = square(pVis_parl);
-    double pVis_perp = SVfit_namespace::compScalarProduct(p3Vis, u_perp);
+    double pVis_perp = svFit_namespace::compScalarProduct(p3Vis, u_perp);
     double pVis_perp2 = square(pVis_perp);
     
     double a = (motherMass2 - visMass2 - 2.*pVis_perp2 - invisMass2)*pVis_parl/(2.*(pVis_parl2 - visEn2));
@@ -121,7 +121,7 @@ matchedTauDecayType::matchedTauDecayType()
 {}
 
 matchedTauDecayType::matchedTauDecayType(const reco::GenParticle* genTau, const reco::Candidate* recCandidate,
-					 const TransientTrackBuilder* trackBuilder, NSVfitDecayVertexFitter* decayVertexFitAlgorithm)
+					 const TransientTrackBuilder* trackBuilder, SVfitDecayVertexFitter* decayVertexFitAlgorithm)
   : genTau_(genTau),
     recCandidate_(recCandidate),
     recLeadTrack_(0),
@@ -362,7 +362,7 @@ void matchedTauDecayType::print(std::ostream& stream) const
 }
   
 void matchRecToGenTauDecays(const edm::View<reco::Candidate>& candidates, const std::vector<const reco::GenParticle*>& genTaus, double dRmatch,
-			    std::vector<matchedTauDecayType*>& matchedTauDecays, const TransientTrackBuilder* trackBuilder, NSVfitDecayVertexFitter* decayVertexFitAlgorithm)
+			    std::vector<matchedTauDecayType*>& matchedTauDecays, const TransientTrackBuilder* trackBuilder, SVfitDecayVertexFitter* decayVertexFitAlgorithm)
 {
   for ( std::vector<const reco::GenParticle*>::const_iterator genTau = genTaus.begin();
 	genTau != genTaus.end(); ++genTau ) {

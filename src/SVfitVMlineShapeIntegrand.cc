@@ -9,7 +9,7 @@
 
 #include <iostream>
 
-using namespace SVfit_namespace;
+using namespace svFit_namespace;
 
 SVfitVMlineShapeIntegrand::SVfitVMlineShapeIntegrand(double minMass2)
   : minMass2_(minMass2),

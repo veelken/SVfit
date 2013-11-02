@@ -1,4 +1,4 @@
-#include "TauAnalysis/CandidateTools/interface/candidateAuxFunctions.h"
+#include "TauAnalysis/SVfit/interface/candidateAuxFunctions.h"
 
 #include "PhysicsTools/JetMCUtils/interface/JetMCTag.h"
 

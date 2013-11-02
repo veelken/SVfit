@@ -1,5 +1,5 @@
-#ifndef TauAnalysis_CandidateTools_CompositePtrCandidateT1T2MEtProducer_h
-#define TauAnalysis_CandidateTools_CompositePtrCandidateT1T2MEtProducer_h
+#ifndef TauAnalysis_SVfit_CompositePtrCandidateT1T2MEtProducer_h
+#define TauAnalysis_SVfit_CompositePtrCandidateT1T2MEtProducer_h
 
 /** \class CompositePtrCandidateT1T2MEtProducer
  *
@@ -11,10 +11,6 @@
  * \authors Colin Bernet,
  *          Michal Bluj,
  *          Christian Veelken
- *
- * \version $Revision: 1.24 $
- *
- * $Id: CompositePtrCandidateT1T2MEtProducer.h,v 1.24 2013/04/14 08:23:20 veelken Exp $
  *
  */
 
@@ -40,12 +36,10 @@
 
 #include "DataFormats/Math/interface/deltaR.h"
 
-#include "TauAnalysis/CandidateTools/interface/FetchCollection.h"
+#include "AnalysisDataFormats/SVfit/interface/CompositePtrCandidateT1T2MEt.h"
+#include "AnalysisDataFormats/SVfit/interface/CompositePtrCandidateT1T2MEtFwd.h"
 
-#include "AnalysisDataFormats/TauAnalysis/interface/CompositePtrCandidateT1T2MEt.h"
-#include "AnalysisDataFormats/TauAnalysis/interface/CompositePtrCandidateT1T2MEtFwd.h"
-
-#include "TauAnalysis/CandidateTools/interface/CompositePtrCandidateT1T2MEtAlgorithm.h"
+#include "TauAnalysis/SVfit/interface/CompositePtrCandidateT1T2MEtAlgorithm.h"
 
 #include "DataFormats/HepMCCandidate/interface/GenParticleFwd.h"
 #include "DataFormats/HepMCCandidate/interface/GenParticle.h"
@@ -146,15 +140,15 @@ class CompositePtrCandidateT1T2MEtProducer : public edm::EDProducer
     size_t numDiTauCandidates = 0;
     if ( srcReRecoDiTauObjects_.label() != "" ) {
       edm::Handle<CompositePtrCandidateCollection> diTauCandidateCollection;
-      pf::fetchCollection(diTauCandidateCollection, srcReRecoDiTauObjects_, evt);
+      evt.getByLabel(srcReRecoDiTauObjects_, diTauCandidateCollection);
       numDiTauCandidates = diTauCandidateCollection->size();
     } else {
       typedef edm::View<T1> T1View;
       edm::Handle<T1View> leg1Collection;
-      pf::fetchCollection(leg1Collection, srcLeg1_, evt);
+      evt.getByLabel(srcLeg1_, leg1Collection);
       typedef edm::View<T2> T2View;
       edm::Handle<T2View> leg2Collection;
-      pf::fetchCollection(leg2Collection, srcLeg2_, evt);
+      evt.getByLabel(srcLeg2_, leg2Collection);
       numDiTauCandidates = leg1Collection->size()*leg2Collection->size();
     }
     if ( numDiTauCandidates == 0 ) {
@@ -182,7 +176,7 @@ class CompositePtrCandidateT1T2MEtProducer : public edm::EDProducer
     const reco::GenParticleCollection* genParticles = 0;
     if ( srcGenParticles_.label() != "" ) {
       edm::Handle<reco::GenParticleCollection> genParticleCollection;
-      pf::fetchCollection(genParticleCollection, srcGenParticles_, evt);
+      evt.getByLabel(srcGenParticles_, genParticleCollection);
       genParticles = genParticleCollection.product();
     }
 
@@ -190,7 +184,7 @@ class CompositePtrCandidateT1T2MEtProducer : public edm::EDProducer
     const reco::Vertex* pv = NULL;
     if ( srcPV_.label() != "" ) {
        edm::Handle<reco::VertexCollection> pvs;
-       pf::fetchCollection(pvs, srcPV_, evt);
+       evt.getByLabel(srcPV_, pvs);
        pv = &((*pvs)[0]);
     }
 
@@ -198,7 +192,7 @@ class CompositePtrCandidateT1T2MEtProducer : public edm::EDProducer
     const reco::BeamSpot* beamSpot = NULL;
     if ( srcBeamSpot_.label() != "" ) {
        edm::Handle<reco::BeamSpot> beamSpotHandle;
-       pf::fetchCollection(beamSpotHandle, srcBeamSpot_, evt);
+       evt.getByLabel(srcBeamSpot_, beamSpotHandle);
        beamSpot = beamSpotHandle.product();
     }
 
@@ -223,15 +217,15 @@ class CompositePtrCandidateT1T2MEtProducer : public edm::EDProducer
 //   (CV: special mode for MEt correction by Z recoil momentum)
     if ( srcReRecoDiTauObjects_.label() != "" ) {
       edm::Handle<CompositePtrCandidateCollection> diTauCandidateCollection;
-      pf::fetchCollection(diTauCandidateCollection, srcReRecoDiTauObjects_, evt);
+      evt.getByLabel(srcReRecoDiTauObjects_, diTauCandidateCollection);
 
       typedef edm::AssociationVector<edm::RefProd<CompositePtrCandidateCollection>, std::vector<int> > diTauToMEtAssociation;
       edm::Handle<diTauToMEtAssociation> correctedMEtAssociation;
-      pf::fetchCollection(correctedMEtAssociation, srcReRecoDiTauToMEtAssociations_, evt);
+      evt.getByLabel(srcReRecoDiTauToMEtAssociations_, correctedMEtAssociation);
 
       typedef edm::View<reco::MET> MEtView;
       edm::Handle<MEtView> correctedMEtCollection;
-      pf::fetchCollection(correctedMEtCollection, srcMET_, evt);
+      evt.getByLabel(srcMET_, correctedMEtCollection);
 
       size_t numDiTauCandidates = diTauCandidateCollection->size();
       for ( size_t iDiTauCandidate = 0; iDiTauCandidate < numDiTauCandidates; ++iDiTauCandidate ) {
@@ -263,16 +257,16 @@ class CompositePtrCandidateT1T2MEtProducer : public edm::EDProducer
 
       typedef edm::View<T1> T1View;
       edm::Handle<T1View> leg1Collection;
-      pf::fetchCollection(leg1Collection, srcLeg1_, evt);
+      evt.getByLabel(srcLeg1_, leg1Collection);
       typedef edm::View<T2> T2View;
       edm::Handle<T2View> leg2Collection;
-      pf::fetchCollection(leg2Collection, srcLeg2_, evt);
+      evt.getByLabel(srcLeg2_, leg2Collection);
 
       MEtPtr metPtr;
       if ( srcMET_.label() != "" ) {
 	typedef edm::View<reco::MET> MEtView;
 	edm::Handle<MEtView> metCollection;
-	pf::fetchCollection(metCollection, srcMET_, evt);
+	evt.getByLabel(srcMET_, metCollection);
 	
 //--- check that there is exactly one MET object in the event
 //    (missing transverse momentum is an **event level** quantity)

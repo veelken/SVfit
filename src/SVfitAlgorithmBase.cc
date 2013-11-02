@@ -6,7 +6,7 @@
 
 #include <TMath.h>
 
-using namespace SVfit_namespace;
+using namespace svFit_namespace;
 
 const SVfitAlgorithmBase* SVfitAlgorithmBase::gSVfitAlgorithm = 0;
 
@@ -68,7 +68,7 @@ void SVfitAlgorithmBase::requestFitParameter(const std::string& name, int type, 
   SVfitParameter* fitParameter = getFitParameter(name, type);
 
   if ( !fitParameter ) {
-    assert(type >= 0 && type < nSVfit_namespace::kNumFitParameter);
+    assert(type >= 0 && type < svFit_namespace::kNumFitParameter);
     SVfitParameter newFitParameter(fitParameterCounter_, name, type);
     fitParameters_.push_back(newFitParameter);
     fitParameter = &fitParameters_.back();

@@ -1,10 +1,10 @@
-#include "TauAnalysis/CandidateTools/plugins/NSVfitAlgorithmByIntegration.h"
+#include "TauAnalysis/SVfit/plugins/SVfitAlgorithmByIntegration.h"
 
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "FWCore/Utilities/interface/Exception.h"
 
-#include "TauAnalysis/CandidateTools/interface/generalAuxFunctions.h"
-#include "TauAnalysis/CandidateTools/interface/svFitAuxFunctions.h"
+#include "TauAnalysis/SVfit/interface/generalAuxFunctions.h"
+#include "TauAnalysis/SVfit/interface/svFitAuxFunctions.h"
 
 #include <TMath.h>
 #include <TH1F.h>
@@ -14,7 +14,7 @@
 
 #include <limits>
 
-using namespace SVfit_namespace;
+using namespace svFit_namespace;
 
 enum { kMax, kMedian, kMean3sigmaWithinMax, kMean5sigmaWithinMax };
 
@@ -22,7 +22,7 @@ namespace
 {
   double g(double* x, size_t dim, void* param)
   {
-    double nll = NSVfitAlgorithmBase::gNSVfitAlgorithm->nll(x, (const double*)param);
+    double nll = SVfitAlgorithmBase::gSVfitAlgorithm->nll(x, (const double*)param);
     double retVal = TMath::Exp(-nll);
     //static long callCounter = 0;
     //if ( (callCounter % 10000) == 0 ) 
@@ -33,8 +33,8 @@ namespace
   }
 }
 
-NSVfitAlgorithmByIntegration::NSVfitAlgorithmByIntegration(const edm::ParameterSet& cfg)
-  : NSVfitAlgorithmBase(cfg),
+SVfitAlgorithmByIntegration::SVfitAlgorithmByIntegration(const edm::ParameterSet& cfg)
+  : SVfitAlgorithmBase(cfg),
     fitParameterValues_(0),
     xl_(0),
     xu_(0),
@@ -88,13 +88,13 @@ NSVfitAlgorithmByIntegration::NSVfitAlgorithmByIntegration(const edm::ParameterS
   else if ( max_or_median_string == "median"              ) max_or_median_ = kMedian;
   else if ( max_or_median_string == "mean3sigmaWithinMax" ) max_or_median_ = kMean3sigmaWithinMax;
   else if ( max_or_median_string == "mean5sigmaWithinMax" ) max_or_median_ = kMean5sigmaWithinMax;
-  else throw cms::Exception("NSVfitAlgorithmByIntegration")
+  else throw cms::Exception("SVfitAlgorithmByIntegration")
     << " Invalid Configuration Parameter 'max_or_median' = " << max_or_median_string << " !!\n";
 
   applyJacobiFactors_ = cfg.getParameter<bool>("applyJacobiFactors");
 }
 
-NSVfitAlgorithmByIntegration::~NSVfitAlgorithmByIntegration() 
+SVfitAlgorithmByIntegration::~SVfitAlgorithmByIntegration() 
 {
   for( std::vector<fitParameterReplacementType*>::iterator it = fitParameterReplacements_.begin();
        it != fitParameterReplacements_.end(); ++it ) {
@@ -114,9 +114,9 @@ NSVfitAlgorithmByIntegration::~NSVfitAlgorithmByIntegration()
   delete massParForReplacements_;
 }
 
-void NSVfitAlgorithmByIntegration::beginJob()
+void SVfitAlgorithmByIntegration::beginJob()
 {
-  NSVfitAlgorithmBase::beginJob();
+  SVfitAlgorithmBase::beginJob();
   
   for ( std::vector<fitParameterReplacementType*>::iterator fitParameterReplacement = fitParameterReplacements_.begin();
 	fitParameterReplacement != fitParameterReplacements_.end(); ++fitParameterReplacement ) {
@@ -125,7 +125,7 @@ void NSVfitAlgorithmByIntegration::beginJob()
 
   numDimensions_ = 0;
 
-  for ( std::vector<NSVfitParameter>::const_iterator fitParameter = fitParameters_.begin();
+  for ( std::vector<SVfitParameter>::const_iterator fitParameter = fitParameters_.begin();
 	fitParameter != fitParameters_.end(); ++fitParameter ) {
     bool isReplaced = false;
     for ( std::vector<fitParameterReplacementType*>::const_iterator fitParameterReplacement = fitParameterReplacements_.begin();
@@ -134,7 +134,7 @@ void NSVfitAlgorithmByIntegration::beginJob()
     }
     
     if ( !isReplaced ) {
-      NSVfitParameterMappingType fitParameterMapping(&(*fitParameter));
+      SVfitParameterMappingType fitParameterMapping(&(*fitParameter));
       fitParameterMapping.idxByIntegration_ = numDimensions_;
       fitParameterMappings_.push_back(fitParameterMapping);
       ++numDimensions_;
@@ -155,18 +155,18 @@ void NSVfitAlgorithmByIntegration::beginJob()
   rnd_ = gsl_rng_alloc(gsl_rng_default);
 }
 
-void NSVfitAlgorithmByIntegration::beginEvent(const edm::Event& evt, const edm::EventSetup& es)
+void SVfitAlgorithmByIntegration::beginEvent(const edm::Event& evt, const edm::EventSetup& es)
 {
-  NSVfitAlgorithmBase::beginEvent(evt, es);
+  SVfitAlgorithmBase::beginEvent(evt, es);
 
   currentRunNumber_ = evt.id().run();
   currentLumiSectionNumber_ = evt.luminosityBlock();
   currentEventNumber_ = evt.id().event();
 }
 
-void NSVfitAlgorithmByIntegration::fitImp() const
+void SVfitAlgorithmByIntegration::fitImp() const
 {
-  //std::cout << "<NSVfitAlgorithmByIntegration::fitImp>:" << std::endl;
+  //std::cout << "<SVfitAlgorithmByIntegration::fitImp>:" << std::endl;
 
   for ( std::vector<fitParameterReplacementType*>::const_iterator fitParameterReplacement = fitParameterReplacements_.begin();
 	fitParameterReplacement != fitParameterReplacements_.end(); ++fitParameterReplacement ) {
@@ -175,9 +175,9 @@ void NSVfitAlgorithmByIntegration::fitImp() const
 	  par != (*fitParameterReplacement)->parForReplacements_.end(); ++par ) {
       replaceParByResonanceHypothesis* par_resonance = dynamic_cast<replaceParByResonanceHypothesis*>(*par);
       if ( par_resonance ) {
-	const NSVfitResonanceHypothesis* resonance = 
-          dynamic_cast<const NSVfitResonanceHypothesis*>(
-            currentEventHypothesis_->NSVfitEventHypothesisBase::resonance(par_resonance->resonanceName_));
+	const SVfitResonanceHypothesis* resonance = 
+          dynamic_cast<const SVfitResonanceHypothesis*>(
+            currentEventHypothesis_->SVfitEventHypothesisBase::resonance(par_resonance->resonanceName_));
 	par_resonance->value_ = (*par_resonance->valueExtractor_)(*resonance);
 	double visMass = resonance->p4().mass();
 	if ( minVisMass == -1. || visMass < minVisMass ) minVisMass = visMass;
@@ -219,7 +219,7 @@ void NSVfitAlgorithmByIntegration::fitImp() const
 			   fitParameterReplacements_[1]->numGridPoints_, fitParameterReplacements_[1]->resBinning_->GetArray());
     if ( !histResults->GetSumw2N() ) histResults->Sumw2();
   } else {
-    throw cms::Exception("NSVfitAlgorithmByIntegration::fitImp")
+    throw cms::Exception("SVfitAlgorithmByIntegration::fitImp")
       << " Only fits in one or two dimensions supported yet "
       << " --> please contact the developers Evan Friis (friis@physics.ucdavis.edu) and Christian Veelken (christian.veelken@cern.ch)"
       << " and request support for more dimensions !!\n";
@@ -300,15 +300,15 @@ void NSVfitAlgorithmByIntegration::fitImp() const
     massParForReplacements_->next();
   }
 
-  NSVfitEventHypothesisByIntegration* persistentEventHypothesis = new NSVfitEventHypothesisByIntegration(*currentEventHypothesis_);
+  SVfitEventHypothesisByIntegration* persistentEventHypothesis = new SVfitEventHypothesisByIntegration(*currentEventHypothesis_);
   persistentEventHypothesis->histMassResults_.reset(histResults);
 
 //--- set central values and uncertainties on reconstructed masses
   for ( unsigned iMassParameter = 0; iMassParameter < numMassParameters_; ++iMassParameter ) {  
     const std::string& resonanceName = eventModel_->resonances_[iMassParameter]->resonanceName_;
-    NSVfitResonanceHypothesisBase* resonance = 
-      const_cast<NSVfitResonanceHypothesisBase*>(persistentEventHypothesis->NSVfitEventHypothesisBase::resonance(resonanceName));
-    setMassResults(dynamic_cast<NSVfitResonanceHypothesisByIntegration*>(resonance), histResults, iMassParameter);
+    SVfitResonanceHypothesisBase* resonance = 
+      const_cast<SVfitResonanceHypothesisBase*>(persistentEventHypothesis->SVfitEventHypothesisBase::resonance(resonanceName));
+    setMassResults(dynamic_cast<SVfitResonanceHypothesisByIntegration*>(resonance), histResults, iMassParameter);
   }
   
   persistentEventHypothesis->mass_            = 0.;
@@ -329,8 +329,8 @@ void NSVfitAlgorithmByIntegration::fitImp() const
   delete currentEventHypothesis_;
 }
 
-void NSVfitAlgorithmByIntegration::setMassResults(
-       NSVfitResonanceHypothesisByIntegration* resonance, const TH1* histMassResults, unsigned iDimension) const
+void SVfitAlgorithmByIntegration::setMassResults(
+       SVfitResonanceHypothesisByIntegration* resonance, const TH1* histMassResults, unsigned iDimension) const
 {
   const TH1* histMassResult1d_density = 0;
   if      ( histMassResults->GetDimension() == 1 ) histMassResult1d_density = histMassResults;
@@ -373,7 +373,7 @@ void NSVfitAlgorithmByIntegration::setMassResults(
     else assert(0);
     double massErrUp   = TMath::Abs(massQuantile084 - mass);
     double massErrDown = TMath::Abs(mass - massQuantile016);
-    NSVfitAlgorithmBase::setMassResults(resonance, mass, massErrUp, massErrDown);
+    SVfitAlgorithmBase::setMassResults(resonance, mass, massErrUp, massErrDown);
 
     resonance->massMean_ = massMean;
     resonance->massMedian_ = massQuantile050;
@@ -384,14 +384,14 @@ void NSVfitAlgorithmByIntegration::setMassResults(
     resonance->isValidSolution_ = true;
     
     if ( verbosity_ >= 1 ) { 
-      std::cout << "<NSVfitAlgorithmByIntegration::setMassResults>:" << std::endl;
+      std::cout << "<SVfitAlgorithmByIntegration::setMassResults>:" << std::endl;
       std::cout << " pluginName = " << pluginName_ << std::endl;
       std::cout << "--> mass = " << resonance->mass_ << " + " << resonance->massErrUp_ << " - " << resonance->massErrDown_ << std::endl;
       std::cout << " (mean = " << massMean << ", median = " << massQuantile050 << ", max = " << massMaximum << ")" << std::endl;
       //resonance->print(std::cout);
     }
   } else {
-    edm::LogWarning("NSVfitAlgorithmByIntegration::setMassResults")
+    edm::LogWarning("SVfitAlgorithmByIntegration::setMassResults")
       << "Likelihood functions returned Probability zero for all tested mass hypotheses --> no valid solution found !!";
     resonance->isValidSolution_ = false;
   }
@@ -400,7 +400,7 @@ void NSVfitAlgorithmByIntegration::setMassResults(
   delete histMassResult1d;
 }
 
-bool NSVfitAlgorithmByIntegration::isDaughter(const std::string& daughterName)
+bool SVfitAlgorithmByIntegration::isDaughter(const std::string& daughterName)
 {
   bool isDaughter = false;
 
@@ -415,7 +415,7 @@ bool NSVfitAlgorithmByIntegration::isDaughter(const std::string& daughterName)
   return isDaughter;
 }
  
-bool NSVfitAlgorithmByIntegration::isResonance(const std::string& resonanceName)
+bool SVfitAlgorithmByIntegration::isResonance(const std::string& resonanceName)
 {
   bool isResonance = false;
 
@@ -427,7 +427,7 @@ bool NSVfitAlgorithmByIntegration::isResonance(const std::string& resonanceName)
   return isResonance;
 }
 
-TFormula* NSVfitAlgorithmByIntegration::makeReplacementFormula(
+TFormula* SVfitAlgorithmByIntegration::makeReplacementFormula(
             const std::string& expression, const std::string& replacementName,
 	    std::vector<replaceParBase*>& parForReplacements, int& numParForReplacements)
 {
@@ -465,7 +465,7 @@ TFormula* NSVfitAlgorithmByIntegration::makeReplacementFormula(
     } else {
       size_t posSeparator = token->find(".");
       if ( posSeparator == std::string::npos ) {
-	throw cms::Exception("NSVfitAlgorithmByIntegration::NSVfitAlgorithmByIntegration")
+	throw cms::Exception("SVfitAlgorithmByIntegration::SVfitAlgorithmByIntegration")
 	  << " Parameter token = " << (*token) << " has invalid format;" 
 	  << " expected format is 'daughter.type' !!\n";
       }
@@ -485,7 +485,7 @@ TFormula* NSVfitAlgorithmByIntegration::makeReplacementFormula(
       } else if ( isResonance(particleName) ) {
 	replaceParByResonanceHypothesis* parForReplacement = new replaceParByResonanceHypothesis();	  
 	parForReplacement->resonanceName_ = particleName;
-	parForReplacement->valueExtractor_ = new StringObjectFunction<NSVfitResonanceHypothesis>(value_string);
+	parForReplacement->valueExtractor_ = new StringObjectFunction<SVfitResonanceHypothesis>(value_string);
 	parForReplacement->iPar_ = numParForReplacements;
 	std::ostringstream par_string;
 	par_string << "[" << parForReplacement->iPar_ << "]";
@@ -493,7 +493,7 @@ TFormula* NSVfitAlgorithmByIntegration::makeReplacementFormula(
 	parForReplacements.push_back(parForReplacement);
 	++numParForReplacements;
       } else {
-	throw cms::Exception("NSVfitAlgorithmByIntegration::NSVfitAlgorithmByIntegration")
+	throw cms::Exception("SVfitAlgorithmByIntegration::SVfitAlgorithmByIntegration")
 	  << " No resonance/daughter of name = " << particleName << " defined !!\n";
       }
     } 
@@ -505,11 +505,11 @@ TFormula* NSVfitAlgorithmByIntegration::makeReplacementFormula(
   return formula;
 }
 
-NSVfitParameter* NSVfitAlgorithmByIntegration::getFitParameter(const std::string& token)
+SVfitParameter* SVfitAlgorithmByIntegration::getFitParameter(const std::string& token)
 {
   size_t posSeparator = token.find(".");
   if ( posSeparator == std::string::npos || posSeparator == (token.length() - 1) ) {
-    throw cms::Exception("NSVfitAlgorithmByIntegration::getFitParameter")
+    throw cms::Exception("SVfitAlgorithmByIntegration::getFitParameter")
       << " Parameter token = " << token << " passed as function argument has invalid format;" 
       << " expected format is 'daughter.type' !!\n";
   }
@@ -517,14 +517,14 @@ NSVfitParameter* NSVfitAlgorithmByIntegration::getFitParameter(const std::string
   std::string name = std::string(token, 0, posSeparator);
   std::string type_string = std::string(token, posSeparator + 1);
   int type = -1;
-  if ( type_string == "x" ) type = nSVfit_namespace::kTau_visEnFracX;
-  else throw cms::Exception("NSVfitAlgorithmByIntegration::getFitParameter")
+  if ( type_string == "x" ) type = svFit_namespace::kTau_visEnFracX;
+  else throw cms::Exception("SVfitAlgorithmByIntegration::getFitParameter")
     << " Type = " << type << " not defined !!\n";
 
-  return NSVfitAlgorithmBase::getFitParameter(name, type);
+  return SVfitAlgorithmBase::getFitParameter(name, type);
 }
 
-double NSVfitAlgorithmByIntegration::nll(const double* x, const double* param) const
+double SVfitAlgorithmByIntegration::nll(const double* x, const double* param) const
 {
 //--- copy fitParameter
   for ( unsigned iDimension = 0; iDimension < numDimensions_; ++iDimension ) {
@@ -587,6 +587,6 @@ double NSVfitAlgorithmByIntegration::nll(const double* x, const double* param) c
 
 #include "FWCore/Framework/interface/MakerMacros.h"
 
-DEFINE_EDM_PLUGIN(NSVfitAlgorithmPluginFactory, NSVfitAlgorithmByIntegration, "NSVfitAlgorithmByIntegration");
+DEFINE_EDM_PLUGIN(SVfitAlgorithmPluginFactory, SVfitAlgorithmByIntegration, "SVfitAlgorithmByIntegration");
 
 

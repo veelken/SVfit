@@ -1,5 +1,5 @@
-#ifndef TauAnalysis_CandidateTools_NSVfitAlgorithmByLikelihoodMaximization_h
-#define TauAnalysis_CandidateTools_NSVfitAlgorithmByLikelihoodMaximization_h
+#ifndef TauAnalysis_SVfit_SVfitAlgorithmByLikelihoodMaximization_h
+#define TauAnalysis_SVfit_SVfitAlgorithmByLikelihoodMaximization_h
 
 /** \class SVfitAlgorithmByLikelihoodMaximization
  *
@@ -8,17 +8,13 @@
  *
  * \author Christian Veelken, UC Davis
  *
- * \version $Revision: 1.5 $
- *
- * $Id: NSVfitAlgorithmByLikelihoodMaximization.h,v 1.5 2012/03/26 15:47:49 veelken Exp $
- *
  */
 
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/EventSetup.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 
-#include "TauAnalysis/CandidateTools/interface/NSVfitAlgorithmBase.h"
+#include "TauAnalysis/SVfit/interface/SVfitAlgorithmBase.h"
 
 #include <Math/Minimizer.h>
 #include <TMatrixD.h>
@@ -26,14 +22,14 @@
 #include <vector>
 #include <string>
 
-namespace nSVfit_namespace
+namespace svFit_namespace
 {
-  class NSVfitObjectiveFunctionAdapter
+  class SVfitObjectiveFunctionAdapter
   {
    public:
     double operator()(const double* x) const
     {
-      double nll = NSVfitAlgorithmBase::gNSVfitAlgorithm->nll(x, 0);
+      double nll = SVfitAlgorithmBase::gSVfitAlgorithm->nll(x, 0);
       static long callCounter = 0;
       //if ( (callCounter % 10000) == 0 )
       //  std::cout << "<operator()> (call = " << callCounter << "):"
@@ -44,11 +40,11 @@ namespace nSVfit_namespace
   };
 }
 
-class NSVfitAlgorithmByLikelihoodMaximization : public NSVfitAlgorithmBase
+class SVfitAlgorithmByLikelihoodMaximization : public SVfitAlgorithmBase
 {
  public:
-  NSVfitAlgorithmByLikelihoodMaximization(const edm::ParameterSet&);
-  ~NSVfitAlgorithmByLikelihoodMaximization();
+  SVfitAlgorithmByLikelihoodMaximization(const edm::ParameterSet&);
+  ~SVfitAlgorithmByLikelihoodMaximization();
 
   bool applyJacobiFactors() const { return false; }
 
@@ -59,10 +55,10 @@ class NSVfitAlgorithmByLikelihoodMaximization : public NSVfitAlgorithmBase
  protected:
   void fitImp() const;
 
-  void setMassResults(NSVfitResonanceHypothesis&) const;
+  void setMassResults(SVfitResonanceHypothesis&) const;
 
   ROOT::Math::Minimizer* minimizer_;
-  nSVfit_namespace::NSVfitObjectiveFunctionAdapter objectiveFunctionAdapter_;
+  svFit_namespace::SVfitObjectiveFunctionAdapter objectiveFunctionAdapter_;
   unsigned maxObjFunctionCalls_;
   mutable TMatrixD covMatrix_;
 
@@ -77,7 +73,7 @@ class NSVfitAlgorithmByLikelihoodMaximization : public NSVfitAlgorithmBase
     if (!minimizer_) {
       throw cms::Exception("InvalidMinimzer")
         << " The ROOT::Math::Minimizer must be instantiated before calling"
-        << " NSVfitAlgorithmByLikelihoodMaximization::setupVariables(...)"
+        << " SVfitAlgorithmByLikelihoodMaximization::setupVariables(...)"
         << std::endl;
     }
     unsigned int ivar = 0;

@@ -1,4 +1,4 @@
-#include "TauAnalysis/CandidateTools/plugins/NSVfitEventLikelihoodMEt2.h"
+#include "TauAnalysis/SVfit/plugins/SVfitEventLikelihoodMEt2.h"
 
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "FWCore/Utilities/interface/Exception.h"
@@ -7,8 +7,8 @@
 #include "DataFormats/PatCandidates/interface/MET.h"
 #include "DataFormats/Math/interface/deltaR.h"
 
-#include "TauAnalysis/CandidateTools/interface/NSVfitAlgorithmBase.h"
-#include "TauAnalysis/CandidateTools/interface/svFitAuxFunctions.h"
+#include "TauAnalysis/SVfit/interface/SVfitAlgorithmBase.h"
+#include "TauAnalysis/SVfit/interface/svFitAuxFunctions.h"
 
 #include "DataFormats/METReco/interface/PFMEtSignCovMatrix.h"
 
@@ -17,21 +17,21 @@
 #include <TH2.h>
 #include <TFile.h>
 
-using namespace SVfit_namespace;
+using namespace svFit_namespace;
 
 const double defaultPFMEtResolutionX = 15.; // approx. resolution of Type-1 corrected PFMET in 2012
 const double defaultPFMEtResolutionY = 15.;
 
 const double epsilon = 1.e-4;
 
-NSVfitEventLikelihoodMEt2::NSVfitEventLikelihoodMEt2(const edm::ParameterSet& cfg)
-  : NSVfitEventLikelihood(cfg),
+SVfitEventLikelihoodMEt2::SVfitEventLikelihoodMEt2(const edm::ParameterSet& cfg)
+  : SVfitEventLikelihood(cfg),
     pfMEtSign_(0),
     pfMEtCov_(2,2),
     pfMEtCovInverse_(2,2),
     tailProbCorrFunction_(0)
 {
-  //std::cout << "<NSVfitEventLikelihoodMEt2::NSVfitEventLikelihoodMEt2>:" << std::endl;
+  //std::cout << "<SVfitEventLikelihoodMEt2::SVfitEventLikelihoodMEt2>:" << std::endl;
   //std::cout << "cfg:" << std::endl;
   //std::cout << cfg << std::endl;
 
@@ -58,22 +58,22 @@ NSVfitEventLikelihoodMEt2::NSVfitEventLikelihoodMEt2(const edm::ParameterSet& cf
   }
 }
 
-NSVfitEventLikelihoodMEt2::~NSVfitEventLikelihoodMEt2()
+SVfitEventLikelihoodMEt2::~SVfitEventLikelihoodMEt2()
 {
   delete pfMEtSign_;
   delete tailProbCorrFunction_;
 }
 
-void NSVfitEventLikelihoodMEt2::beginJob(NSVfitAlgorithmBase* algorithm)
+void SVfitEventLikelihoodMEt2::beginJob(SVfitAlgorithmBase* algorithm)
 {
-  algorithm->requestFitParameter("allTauDecays", nSVfit_namespace::kTau_visEnFracX, pluginName_);
-  algorithm->requestFitParameter("allTauDecays", nSVfit_namespace::kTau_phi_lab,    pluginName_);
-  algorithm->requestFitParameter("allLeptons",   nSVfit_namespace::kLep_shiftEn,    pluginName_);
-  algorithm->requestFitParameter("allNeutrinos", nSVfit_namespace::kNu_energy_lab,  pluginName_);
-  algorithm->requestFitParameter("allNeutrinos", nSVfit_namespace::kNu_phi_lab,     pluginName_);
+  algorithm->requestFitParameter("allTauDecays", svFit_namespace::kTau_visEnFracX, pluginName_);
+  algorithm->requestFitParameter("allTauDecays", svFit_namespace::kTau_phi_lab,    pluginName_);
+  algorithm->requestFitParameter("allLeptons",   svFit_namespace::kLep_shiftEn,    pluginName_);
+  algorithm->requestFitParameter("allNeutrinos", svFit_namespace::kNu_energy_lab,  pluginName_);
+  algorithm->requestFitParameter("allNeutrinos", svFit_namespace::kNu_phi_lab,     pluginName_);
 }
 
-void NSVfitEventLikelihoodMEt2::beginEvent(const edm::Event& evt, const edm::EventSetup& es)
+void SVfitEventLikelihoodMEt2::beginEvent(const edm::Event& evt, const edm::EventSetup& es)
 {
   if ( srcMEtCovMatrix_.label() != "" ) {
     bool isValid = false;
@@ -127,11 +127,11 @@ namespace
   }
 }
 
-void NSVfitEventLikelihoodMEt2::beginCandidate(const NSVfitEventHypothesis* hypothesis) const
+void SVfitEventLikelihoodMEt2::beginCandidate(const SVfitEventHypothesis* hypothesis) const
 {
 #ifdef SVFIT_DEBUG     
   if ( this->verbosity_ >= 1 ) {
-    std::cout << "<NSVfitEventLikelihoodMEt2::beginCandidate>:" << std::endl;
+    std::cout << "<SVfitEventLikelihoodMEt2::beginCandidate>:" << std::endl;
     std::cout << " hypothesis = " << hypothesis << std::endl;
   }
 #endif  
@@ -140,10 +140,10 @@ void NSVfitEventLikelihoodMEt2::beginCandidate(const NSVfitEventHypothesis* hypo
     
     size_t numResonances = hypothesis->numResonances();
     for ( size_t iResonance = 0; iResonance < numResonances; ++iResonance ) {
-      const NSVfitResonanceHypothesis* resonance = hypothesis->resonance(iResonance);
+      const SVfitResonanceHypothesis* resonance = hypothesis->resonance(iResonance);
       size_t numDaughters = resonance->numDaughters();
       for ( size_t iDaughter = 0; iDaughter < numDaughters; ++iDaughter ) {
-	const NSVfitSingleParticleHypothesis* daughter = resonance->daughter(iDaughter);
+	const SVfitSingleParticleHypothesis* daughter = resonance->daughter(iDaughter);
 	if ( daughter->particle().isNonnull() ) daughterHypothesesList.push_back(daughter->particle().get());
       }
     }
@@ -177,7 +177,7 @@ void NSVfitEventLikelihoodMEt2::beginCandidate(const NSVfitEventHypothesis* hypo
     pfMEtCovInverse10_ = pfMEtCovInverse_(1, 0);
     pfMEtCovInverse11_ = pfMEtCovInverse_(1, 1);
   } else {
-    edm::LogWarning ("NSVfitEventLikelihoodMEt2::beginCandidate")
+    edm::LogWarning ("SVfitEventLikelihoodMEt2::beginCandidate")
       << "Failed to invert MET covariance matrix --> using approximate values for MET resolution instead !!";
     pfMEtCovInverse00_ = square(1./defaultPFMEtResolutionX);
     pfMEtCovInverse01_ = 0.;
@@ -213,7 +213,7 @@ void NSVfitEventLikelihoodMEt2::beginCandidate(const NSVfitEventHypothesis* hypo
   }
 }
 
-double NSVfitEventLikelihoodMEt2::operator()(const NSVfitEventHypothesis* hypothesis) const
+double SVfitEventLikelihoodMEt2::operator()(const SVfitEventHypothesis* hypothesis) const
 {
 //--- compute negative log-likelihood for neutrinos produced in tau lepton decays
 //    to match missing transverse momentum reconstructed in the event
@@ -225,7 +225,7 @@ double NSVfitEventLikelihoodMEt2::operator()(const NSVfitEventHypothesis* hypoth
   residual_fitted1_ = hypothesis->dp4MEt_fitted().py();
 #ifdef SVFIT_DEBUG     
   if ( this->verbosity_ >= 2 ) {
-    std::cout << "<NSVfitEventLikelihoodMEt2::operator()>:" << std::endl;
+    std::cout << "<SVfitEventLikelihoodMEt2::operator()>:" << std::endl;
     std::cout << " pxResidual_fitted = " << residual_fitted0_ << std::endl;
     std::cout << " pyResidual_fitted = " << residual_fitted1_ << std::endl;
   }
@@ -256,4 +256,4 @@ double NSVfitEventLikelihoodMEt2::operator()(const NSVfitEventHypothesis* hypoth
 
 #include "FWCore/Framework/interface/MakerMacros.h"
 
-DEFINE_EDM_PLUGIN(NSVfitEventLikelihoodPluginFactory, NSVfitEventLikelihoodMEt2, "NSVfitEventLikelihoodMEt2");
+DEFINE_EDM_PLUGIN(SVfitEventLikelihoodPluginFactory, SVfitEventLikelihoodMEt2, "SVfitEventLikelihoodMEt2");

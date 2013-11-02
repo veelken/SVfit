@@ -16,7 +16,7 @@
 
 #include "TauAnalysis/SVfit/interface/SVfitLikelihoodBase.h"
 
-#include "AnalysisDataFormats/TauAnalysis/interface/SVfitEventHypothesis.h"
+#include "AnalysisDataFormats/SVfit/interface/SVfitEventHypothesis.h"
 
 #include <string>
 #include <iostream>

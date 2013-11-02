@@ -9,7 +9,7 @@
 
 #include <limits>
 
-using namespace SVfit_namespace;
+using namespace svFit_namespace;
 
 template <typename T>
 SVfitTauToLepLikelihoodPhaseSpace<T>::SVfitTauToLepLikelihoodPhaseSpace(const edm::ParameterSet& cfg)
@@ -31,9 +31,9 @@ void SVfitTauToLepLikelihoodPhaseSpace<T>::beginJob(SVfitAlgorithmBase* algorith
 {
   algorithm_ = algorithm;
 
-  algorithm->requestFitParameter(prodParticleLabel_, nSVfit_namespace::kTau_visEnFracX, pluginName_);
-  algorithm->requestFitParameter(prodParticleLabel_, nSVfit_namespace::kTau_phi_lab,    pluginName_);
-  algorithm->requestFitParameter(prodParticleLabel_, nSVfit_namespace::kTau_nuInvMass,  pluginName_);
+  algorithm->requestFitParameter(prodParticleLabel_, svFit_namespace::kTau_visEnFracX, pluginName_);
+  algorithm->requestFitParameter(prodParticleLabel_, svFit_namespace::kTau_phi_lab,    pluginName_);
+  algorithm->requestFitParameter(prodParticleLabel_, svFit_namespace::kTau_nuInvMass,  pluginName_);
 }
 
 template <typename T>

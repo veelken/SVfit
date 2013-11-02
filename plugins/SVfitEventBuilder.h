@@ -1,16 +1,12 @@
-#ifndef TauAnalysis_CandidateTools_NSVfitEventBuilder_h
-#define TauAnalysis_CandidateTools_NSVfitEventBuilder_h
+#ifndef TauAnalysis_SVfit_SVfitEventBuilder_h
+#define TauAnalysis_SVfit_SVfitEventBuilder_h
 
-/** \class NSVfitEventBuilder
+/** \class SVfitEventBuilder
  *
- * Auxiliary class for building NSVfitEventHypothesis objects;
- * used by NSVfit algorithm
+ * Auxiliary class for building SVfitEventHypothesis objects;
+ * used by SVfit algorithm
  *
  * \author Christian Veelken, UC Davis
- *
- * \version $Revision: 1.6 $
- *
- * $Id: NSVfitEventBuilder.h,v 1.6 2012/09/11 10:05:46 veelken Exp $
  *
  */
 
@@ -19,30 +15,30 @@
 
 #include "DataFormats/VertexReco/interface/Vertex.h"
 
-#include "TauAnalysis/CandidateTools/interface/NSVfitEventBuilderBase.h"
+#include "TauAnalysis/SVfit/interface/SVfitEventBuilderBase.h"
 
-#include "AnalysisDataFormats/TauAnalysis/interface/NSVfitEventHypothesisBase.h"
+#include "AnalysisDataFormats/SVfit/interface/SVfitEventHypothesisBase.h"
 
-class NSVfitEventBuilder : public NSVfitEventBuilderBase
+class SVfitEventBuilder : public SVfitEventBuilderBase
 {
  public:
 
-  NSVfitEventBuilder(const edm::ParameterSet&);
-  ~NSVfitEventBuilder() {}
+  SVfitEventBuilder(const edm::ParameterSet&);
+  ~SVfitEventBuilder() {}
 
-  void beginJob(NSVfitAlgorithmBase*);
+  void beginJob(SVfitAlgorithmBase*);
   void beginEvent(const edm::Event&, const edm::EventSetup&);
 
   typedef edm::Ptr<reco::Candidate> CandidatePtr;
   typedef std::map<std::string, CandidatePtr> inputParticleMap;
-  NSVfitEventHypothesis* build(const inputParticleMap&, const reco::Vertex*) const;
+  SVfitEventHypothesis* build(const inputParticleMap&, const reco::Vertex*) const;
   
  private:
   /// different possible polarization states of W bosons
   std::vector<int> polHandedness_;
   unsigned numPolStates_;
 
-  NSVfitAlgorithmBase* algorithm_;
+  SVfitAlgorithmBase* algorithm_;
 
   /// optional parameters for setting reconstructed to Monte Carlo truth values
   edm::InputTag srcGenVertex_;

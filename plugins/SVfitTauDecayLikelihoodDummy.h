@@ -13,9 +13,8 @@
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 
 #include "TauAnalysis/SVfit/interface/SVfitSingleParticleLikelihood.h"
-#include "TauAnalysis/SVfit/interface/SVfitCachingPdfWrapper.h"
 
-#include "AnalysisDataFormats/TauAnalysis/interface/SVfitSingleParticleHypothesisBase.h"
+#include "AnalysisDataFormats/SVfit/interface/SVfitSingleParticleHypothesisBase.h"
 
 #include "RooAbsPdf.h"
 #include "RooRealVar.h"

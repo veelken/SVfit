@@ -1,7 +1,7 @@
-#ifndef TauAnalysis_CandidateTools_NSVfitProducer_h
-#define TauAnalysis_CandidateTools_NSVfitProducer_h
+#ifndef TauAnalysis_SVfit_SVfitProducer_h
+#define TauAnalysis_SVfit_SVfitProducer_h
 
-/** \class NSVfitProducer
+/** \class SVfitProducer
  *
  * Produce data-formats storing solutions of nSVfit algorithm
  *
@@ -9,7 +9,7 @@
  *
  * \version $Revision: 1.3 $
  *
- * $Id: NSVfitProducerT.h,v 1.3 2012/04/09 16:48:48 veelken Exp $
+ * $Id: SVfitProducerT.h,v 1.3 2012/04/09 16:48:48 veelken Exp $
  *
  */
 
@@ -20,7 +20,7 @@
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/Utilities/interface/InputTag.h"
 
-#include "TauAnalysis/CandidateTools/interface/NSVfitAlgorithmBase.h"
+#include "TauAnalysis/SVfit/interface/SVfitAlgorithmBase.h"
 
 #include <TStopwatch.h>
 
@@ -28,11 +28,11 @@
 #include <string>
 
 template <typename T>
-class NSVfitProducerT : public edm::EDProducer 
+class SVfitProducerT : public edm::EDProducer 
 {
  public:
-  explicit NSVfitProducerT(const edm::ParameterSet&);
-  ~NSVfitProducerT();
+  explicit SVfitProducerT(const edm::ParameterSet&);
+  ~SVfitProducerT();
 
   void beginJob();
 
@@ -45,9 +45,9 @@ class NSVfitProducerT : public edm::EDProducer
 
   std::string instanceLabel_;
 
-  NSVfitAlgorithmBase* algorithm_;
+  SVfitAlgorithmBase* algorithm_;
   
-  typedef std::vector<T> NSVfitEventHypothesisCollection;
+  typedef std::vector<T> SVfitEventHypothesisCollection;
 
   typedef std::vector<std::string> vstring;
   vstring inputParticleNames_;

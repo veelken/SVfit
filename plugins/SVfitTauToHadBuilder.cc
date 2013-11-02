@@ -10,16 +10,16 @@
  */
 
 #include "FWCore/ServiceRegistry/interface/Service.h"
-#include "TauAnalysis/CandidateTools/interface/SVfitTrackService.h"
+#include "TauAnalysis/SVfit/interface/SVfitTrackService.h"
 
 #include "FWCore/Utilities/interface/Exception.h"
 
 #include "RecoVertex/KalmanVertexFit/interface/KalmanVertexFitter.h"
 #include "RecoVertex/VertexPrimitives/interface/TransientVertex.h"
 
-#include "TauAnalysis/CandidateTools/interface/SVfitTauDecayBuilder.h"
-#include "TauAnalysis/CandidateTools/interface/SVfitSingleParticleTrackExtractor.h"
-#include "TauAnalysis/CandidateTools/interface/SVfitParameter.h"
+#include "TauAnalysis/SVfit/interface/SVfitTauDecayBuilder.h"
+#include "TauAnalysis/SVfit/interface/SVfitSingleParticleTrackExtractor.h"
+#include "TauAnalysis/SVfit/interface/SVfitParameter.h"
 
 #include "AnalysisDataFormats/SVfit/interface/SVfitTauToHadHypothesis.h"
 

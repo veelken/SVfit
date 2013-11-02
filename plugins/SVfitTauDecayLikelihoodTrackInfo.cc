@@ -44,14 +44,14 @@ void SVfitTauDecayLikelihoodTrackInfo::beginJob(SVfitAlgorithmBase* algorithm)
 {
   algorithm_ = algorithm;
 
-  algorithm->requestFitParameter(prodParticleLabel_, nSVfit_namespace::kTau_visEnFracX,              pluginName_);
-  algorithm->requestFitParameter(prodParticleLabel_, nSVfit_namespace::kTau_phi_lab,                 pluginName_);
-  algorithm->requestFitParameter(prodParticleLabel_, nSVfit_namespace::kTau_decayDistance_lab_shift, pluginName_);
+  algorithm->requestFitParameter(prodParticleLabel_, svFit_namespace::kTau_visEnFracX,              pluginName_);
+  algorithm->requestFitParameter(prodParticleLabel_, svFit_namespace::kTau_phi_lab,                 pluginName_);
+  algorithm->requestFitParameter(prodParticleLabel_, svFit_namespace::kTau_decayDistance_lab_shift, pluginName_);
 }
 
 void SVfitTauDecayLikelihoodTrackInfo::beginCandidate(const SVfitSingleParticleHypothesis*)
 {
-  SVfitParameter* fitParameter = algorithm_->getFitParameter(prodParticleLabel_, nSVfit_namespace::kTau_decayDistance_lab_shift);
+  SVfitParameter* fitParameter = algorithm_->getFitParameter(prodParticleLabel_, svFit_namespace::kTau_decayDistance_lab_shift);
   assert(fitParameter);
   decayDistance_lab_shift_lowerLimit_ = fitParameter->LowerLimit();
   decayDistance_lab_shift_upperLimit_ = fitParameter->UpperLimit();

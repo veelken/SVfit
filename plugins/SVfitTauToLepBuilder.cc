@@ -13,9 +13,9 @@
 
 #include "DataFormats/TauReco/interface/PFTauDecayMode.h"
 
-#include "TauAnalysis/CandidateTools/interface/SVfitTauDecayBuilder.h"
-#include "TauAnalysis/CandidateTools/interface/SVfitSingleParticleTrackExtractor.h"
-#include "TauAnalysis/CandidateTools/interface/SVfitParameter.h"
+#include "TauAnalysis/SVfit/interface/SVfitTauDecayBuilder.h"
+#include "TauAnalysis/SVfit/interface/SVfitSingleParticleTrackExtractor.h"
+#include "TauAnalysis/SVfit/interface/SVfitParameter.h"
 
 #include "AnalysisDataFormats/SVfit/interface/SVfitTauToDaughtersHypothesisBaseT1T2.h"
 
@@ -31,7 +31,7 @@ class SVfitTauToLepBuilder : public SVfitTauDecayBuilder
   {
     SVfitTauDecayBuilder::beginJob(algorithm);
 
-    idxFitParameter_nuInvMass_ = getFitParameterIdx(algorithm, prodParticleLabel_, nSVfit_namespace::kTau_nuInvMass);
+    idxFitParameter_nuInvMass_ = getFitParameterIdx(algorithm, prodParticleLabel_, svFit_namespace::kTau_nuInvMass);
 
     //if ( verbosity_ ) print(std::cout);
   }

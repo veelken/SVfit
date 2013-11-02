@@ -6,7 +6,7 @@
 
 #include <string>
 
-using namespace SVfit_namespace;
+using namespace svFit_namespace;
 
 SVfitResonanceLikelihoodPolarization::SVfitResonanceLikelihoodPolarization(const edm::ParameterSet& cfg)
   : SVfitResonanceLikelihood(cfg)

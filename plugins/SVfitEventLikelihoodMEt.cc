@@ -1,19 +1,19 @@
-#include "TauAnalysis/CandidateTools/plugins/NSVfitEventLikelihoodMEt.h"
+#include "TauAnalysis/SVfit/plugins/SVfitEventLikelihoodMEt.h"
 
-#include "TauAnalysis/CandidateTools/interface/NSVfitAlgorithmBase.h"
-#include "TauAnalysis/CandidateTools/interface/svFitAuxFunctions.h"
+#include "TauAnalysis/SVfit/interface/SVfitAlgorithmBase.h"
+#include "TauAnalysis/SVfit/interface/svFitAuxFunctions.h"
 
 #include <TMath.h>
 
 #include <string>
 
-using namespace SVfit_namespace;
+using namespace svFit_namespace;
 
 const double parSigmaMin  = 5.0;
 const double perpSigmaMin = 5.0;
 
-NSVfitEventLikelihoodMEt::NSVfitEventLikelihoodMEt(const edm::ParameterSet& cfg)
-  : NSVfitEventLikelihood(cfg),
+SVfitEventLikelihoodMEt::SVfitEventLikelihoodMEt(const edm::ParameterSet& cfg)
+  : SVfitEventLikelihood(cfg),
     parSigma_(0),
     parBias_(0),
     perpSigma_(0),
@@ -32,7 +32,7 @@ NSVfitEventLikelihoodMEt::NSVfitEventLikelihoodMEt(const edm::ParameterSet& cfg)
   perpBias_  = new TFormula("perpBias",  cfgResolution.getParameter<std::string>("perpBias").data());
 }
 
-NSVfitEventLikelihoodMEt::~NSVfitEventLikelihoodMEt()
+SVfitEventLikelihoodMEt::~SVfitEventLikelihoodMEt()
 {
   delete parSigma_;
   delete parBias_;
@@ -40,30 +40,30 @@ NSVfitEventLikelihoodMEt::~NSVfitEventLikelihoodMEt()
   delete perpBias_;
 }
 
-void NSVfitEventLikelihoodMEt::beginJob(NSVfitAlgorithmBase* algorithm) const 
+void SVfitEventLikelihoodMEt::beginJob(SVfitAlgorithmBase* algorithm) const 
 {
-  algorithm->requestFitParameter("allTauDecays", nSVfit_namespace::kTau_visEnFracX, pluginName_);
-  algorithm->requestFitParameter("allTauDecays", nSVfit_namespace::kTau_phi_lab,    pluginName_);
-  algorithm->requestFitParameter("allLeptons",   nSVfit_namespace::kLep_shiftEn,    pluginName_);
-  algorithm->requestFitParameter("allNeutrinos", nSVfit_namespace::kNu_energy_lab,  pluginName_);
-  algorithm->requestFitParameter("allNeutrinos", nSVfit_namespace::kNu_phi_lab,     pluginName_);
+  algorithm->requestFitParameter("allTauDecays", svFit_namespace::kTau_visEnFracX, pluginName_);
+  algorithm->requestFitParameter("allTauDecays", svFit_namespace::kTau_phi_lab,    pluginName_);
+  algorithm->requestFitParameter("allLeptons",   svFit_namespace::kLep_shiftEn,    pluginName_);
+  algorithm->requestFitParameter("allNeutrinos", svFit_namespace::kNu_energy_lab,  pluginName_);
+  algorithm->requestFitParameter("allNeutrinos", svFit_namespace::kNu_phi_lab,     pluginName_);
 }
 
-void NSVfitEventLikelihoodMEt::beginCandidate(const NSVfitEventHypothesis* hypothesis) const
+void SVfitEventLikelihoodMEt::beginCandidate(const SVfitEventHypothesis* hypothesis) const
 {
   qX_ = hypothesis->p4().px() + hypothesis->p4MEt().px();
   qY_ = hypothesis->p4().py() + hypothesis->p4MEt().py();
   qT_ = TMath::Sqrt(qX_*qX_ + qY_*qY_);
 }
 
-double NSVfitEventLikelihoodMEt::operator()(const NSVfitEventHypothesis* hypothesis) const
+double SVfitEventLikelihoodMEt::operator()(const SVfitEventHypothesis* hypothesis) const
 {
 //--- compute negative log-likelihood for neutrinos produced in tau lepton decays
 //    to match missing transverse momentum reconstructed in the event
 //
 //    NB: MET likelihood is split into perp/par components along (leptonic) leg1 of the diTau object
 //
-  //if ( this->verbosity_ ) std::cout << "<NSVfitEventLikelihoodMEt::operator()>:" << std::endl;
+  //if ( this->verbosity_ ) std::cout << "<SVfitEventLikelihoodMEt::operator()>:" << std::endl;
 
   double parSigma = parSigma_->Eval(qT_);
   if ( parSigma < parSigmaMin ) parSigma = parSigmaMin;
@@ -106,4 +106,4 @@ double NSVfitEventLikelihoodMEt::operator()(const NSVfitEventHypothesis* hypothe
 
 #include "FWCore/Framework/interface/MakerMacros.h"
 
-DEFINE_EDM_PLUGIN(NSVfitEventLikelihoodPluginFactory, NSVfitEventLikelihoodMEt, "NSVfitEventLikelihoodMEt");
+DEFINE_EDM_PLUGIN(SVfitEventLikelihoodPluginFactory, SVfitEventLikelihoodMEt, "SVfitEventLikelihoodMEt");

@@ -1,4 +1,4 @@
-#include "TauAnalysis/CandidateTools/interface/generalAuxFunctions.h"
+#include "TauAnalysis/SVfit/interface/generalAuxFunctions.h"
 
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 

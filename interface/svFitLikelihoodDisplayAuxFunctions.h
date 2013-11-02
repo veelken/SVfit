@@ -9,7 +9,7 @@
 #include "DataFormats/Candidate/interface/Candidate.h"
 #include "DataFormats/Math/interface/AlgebraicROOTObjects.h"
 
-#include "TauAnalysis/CandidateTools/interface/NSVfitDecayVertexFitter.h"
+#include "TauAnalysis/SVfit/interface/SVfitDecayVertexFitter.h"
 
 #include <vector>
 #include <string>
@@ -18,7 +18,7 @@
 struct matchedTauDecayType
 {
   matchedTauDecayType();
-  matchedTauDecayType(const reco::GenParticle*, const reco::Candidate*, const TransientTrackBuilder*, NSVfitDecayVertexFitter*);
+  matchedTauDecayType(const reco::GenParticle*, const reco::Candidate*, const TransientTrackBuilder*, SVfitDecayVertexFitter*);
   ~matchedTauDecayType();
 
   void print(std::ostream& stream) const;
@@ -51,7 +51,7 @@ struct matchedTauDecayType
   
 void matchRecToGenTauDecays(const edm::View<reco::Candidate>&, const std::vector<const reco::GenParticle*>&, double,
 			    std::vector<matchedTauDecayType*>&, 
-			    const TransientTrackBuilder* = 0, NSVfitDecayVertexFitter* = 0);
+			    const TransientTrackBuilder* = 0, SVfitDecayVertexFitter* = 0);
 
 reco::Candidate::LorentzVector compFlightP4(const AlgebraicVector3&, double);
 reco::Candidate::LorentzVector compFlightP4(const AlgebraicVector3&, const AlgebraicVector3&, double, double);
