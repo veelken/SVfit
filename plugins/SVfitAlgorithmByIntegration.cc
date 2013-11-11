@@ -431,6 +431,9 @@ TFormula* SVfitAlgorithmByIntegration::makeReplacementFormula(
             const std::string& expression, const std::string& replacementName,
 	    std::vector<replaceParBase*>& parForReplacements, int& numParForReplacements)
 {
+  //std::cout << "<NSVfitAlgorithmByIntegration::makeReplacementFormula>:" << std::endl;
+  //std::cout << " expression = " << expression << std::endl;
+
   size_t pos_token0 = -1;
   size_t pos = 0;
   std::set<std::string> tokens;
@@ -439,7 +442,8 @@ TFormula* SVfitAlgorithmByIntegration::makeReplacementFormula(
 		     expression[pos] == '*' || expression[pos] == '/' ||
 		     expression[pos] == '+' || expression[pos] == '-');      
     if ( (isSymbol || pos == (expression.length() - 1)) && (pos - pos_token0) > 1 ) {
-      size_t num = ( pos != (expression.length() - 1) ) ? pos - (pos_token0 + 1) : pos - pos_token0;
+      //size_t num = ( pos != (expression.length() - 1) ) ? pos - (pos_token0 + 1) : pos - pos_token0;
+      size_t num = ( isSymbol ) ? pos - (pos_token0 + 1) : pos - pos_token0;
       std::string token = std::string(expression, pos_token0 + 1, num);	
 //--- skip tokens that are constant numbers     
       std::string regexpParser_notNumber_string = std::string("[^0-9.]+");
@@ -460,6 +464,7 @@ TFormula* SVfitAlgorithmByIntegration::makeReplacementFormula(
   numParForReplacements = 0;
   for ( std::set<std::string>::const_iterator token = tokens.begin();
 	token != tokens.end(); ++token ) {
+    //std::cout << "processing token = " << (*token) << std::endl;
     if ( (*token) == replacementName ) {
       formula_string = replace_string(formula_string, *token, "x", 0, 1000, errorFlag);
     } else {
