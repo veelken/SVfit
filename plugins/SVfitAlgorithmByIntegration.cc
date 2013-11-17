@@ -116,6 +116,10 @@ SVfitAlgorithmByIntegration::~SVfitAlgorithmByIntegration()
 
 void SVfitAlgorithmByIntegration::beginJob()
 {
+  if ( verbosity_ >= 1 ) {
+    std::cout << "<SVfitAlgorithmByIntegration::beginJob>:" << std::endl;
+  }
+
   SVfitAlgorithmBase::beginJob();
   
   for ( std::vector<fitParameterReplacementType*>::iterator fitParameterReplacement = fitParameterReplacements_.begin();
@@ -139,6 +143,9 @@ void SVfitAlgorithmByIntegration::beginJob()
       fitParameterMappings_.push_back(fitParameterMapping);
       ++numDimensions_;
     }
+  }
+  if ( verbosity_ >= 1 ) {
+    std::cout << " numDimensions = " << numDimensions_ << std::endl;
   }
 
   fitParameterValues_ = new double[fitParameters_.size()];

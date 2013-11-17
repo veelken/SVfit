@@ -1,10 +1,9 @@
 import FWCore.ParameterSet.Config as cms
 import copy
 
-from TauAnalysis.CandidateTools.tools.objProdConfigurator import *
-from TauAnalysis.CandidateTools.resolutions_cfi import *
-from TauAnalysis.CandidateTools.svFitAlgorithmDiTau_cfi import *
-from TauAnalysis.CandidateTools.svFitAlgorithmTauDecayKineMC_cfi import *
+from TauAnalysis.SVfit.tools.objProdConfigurator import *
+from TauAnalysis.SVfit.resolutions_cfi import *
+from TauAnalysis.SVfit.svFitAlgorithmDiTau_cfi import *
 from RecoMET.METProducers.METSigParams_cfi import *
 
 #--------------------------------------------------------------------------------
