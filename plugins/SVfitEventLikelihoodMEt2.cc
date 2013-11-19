@@ -31,10 +31,6 @@ SVfitEventLikelihoodMEt2::SVfitEventLikelihoodMEt2(const edm::ParameterSet& cfg)
     pfMEtCovInverse_(2,2),
     tailProbCorrFunction_(0)
 {
-  //std::cout << "<SVfitEventLikelihoodMEt2::SVfitEventLikelihoodMEt2>:" << std::endl;
-  //std::cout << "cfg:" << std::endl;
-  //std::cout << cfg << std::endl;
-
   power_ = ( cfg.exists("power") ) ?
     cfg.getParameter<double>("power") : 1.0;
 
@@ -129,12 +125,11 @@ namespace
 
 void SVfitEventLikelihoodMEt2::beginCandidate(const SVfitEventHypothesis* hypothesis) const
 {
-#ifdef SVFIT_DEBUG     
   if ( this->verbosity_ >= 1 ) {
     std::cout << "<SVfitEventLikelihoodMEt2::beginCandidate>:" << std::endl;
     std::cout << " hypothesis = " << hypothesis << std::endl;
   }
-#endif  
+
   if ( srcMEtCovMatrix_.label() == "" ) {
     std::list<const reco::Candidate*> daughterHypothesesList;
     
@@ -156,18 +151,18 @@ void SVfitEventLikelihoodMEt2::beginCandidate(const SVfitEventHypothesis* hypoth
     pfMEtCov_(1, 1) *= sfMEtCov_;
   }
 
-#ifdef SVFIT_DEBUG     
   if ( this->verbosity_ >= 1 ) {
     std::cout << "pfMEt:" << std::endl;
     std::cout << " Px = " << hypothesis->met()->px() << ", Py = " << hypothesis->met()->py() << std::endl;
     if ( dynamic_cast<const pat::MET*>(hypothesis->met().get()) != 0 ) {
       const reco::GenMET* genMET = (dynamic_cast<const pat::MET*>(hypothesis->met().get()))->genMET();
-      std::cout << "(genMEt: Px = " << genMET->px() << ", Py = " << genMET->py() << ")" << std::endl;
+      if ( genMET ) std::cout << "(genMEt: Px = " << genMET->px() << ", Py = " << genMET->py() << ")" << std::endl;
+      else std::cout << "(genMEt: N/A)" << std::endl;
     }
     std::cout << "pfMEtCov:" << std::endl;
     pfMEtCov_.Print();
   }
-#endif
+
   pfMEtCovDet_ = determinant(pfMEtCov_);
   pfMEtCovInverse_ = pfMEtCov_;
   if ( pfMEtCovDet_ > epsilon ) {

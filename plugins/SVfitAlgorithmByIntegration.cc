@@ -205,7 +205,7 @@ void SVfitAlgorithmByIntegration::fitImp() const
   for ( unsigned iDimension = 0; iDimension < numDimensions_; ++iDimension ) {
     xl_[iDimension] = fitParameterMappings_[iDimension].base_->LowerLimit(); 
     xu_[iDimension] = fitParameterMappings_[iDimension].base_->UpperLimit();
-    if ( verbosity_ >= 2 ) { 
+    if ( verbosity_ >= 3 ) { 
       std::cout << " fitParameter #" << iDimension << " (" << fitParameterMappings_[iDimension].base_->Name() << ":" 
     	        << fitParameterMappings_[iDimension].base_->Type() << "):"
     	        << " xl = " << xl_[iDimension] << ", xu = " << xu_[iDimension] << std::endl;
@@ -349,7 +349,7 @@ void SVfitAlgorithmByIntegration::setMassResults(
   }
   assert(histMassResult1d_density);
 
-  if ( verbosity_ >= 2 ) { 
+  if ( verbosity_ >= 3 ) { 
     for ( int iBin = 1; iBin <= histMassResult1d_density->GetNbinsX(); ++iBin ) {
       std::cout << " iBin " << iBin << " (" << histMassResult1d_density->GetBinCenter(iBin) <<  "):" 
   	        << " " << histMassResult1d_density->GetBinContent(iBin) << std::endl;

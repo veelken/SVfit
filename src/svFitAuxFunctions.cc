@@ -587,13 +587,13 @@ namespace svFit_namespace
       double binCenter = histogram->GetBinCenter(iBin);
       double binContent = histogram->GetBinContent(iBin);
       if ( binContent >= threshold ) {
-	if ( verbosity ) std::cout << " adding binContent = " << binContent << " @ binCenter = " << binCenter << std::endl;
+	if ( verbosity >= 3 ) std::cout << " adding binContent = " << binContent << " @ binCenter = " << binCenter << std::endl;
 	mean += (binCenter*binContent);
 	normalization += binContent;
       }
     }
     if ( normalization > 0. ) mean /= normalization;
-    if ( verbosity ) std::cout << "--> mean = " << mean << std::endl;
+    if ( verbosity >= 3 ) std::cout << "--> mean = " << mean << std::endl;
     return mean;
   }
 
@@ -605,7 +605,7 @@ namespace svFit_namespace
 				  int verbosity)
   {
 //--- compute median, -1 sigma and +1 sigma limits on reconstructed mass
-    if ( verbosity >= 2 ) std::cout << "<extractHistogramProperties>:" << std::endl;
+    if ( verbosity >= 3 ) std::cout << "<extractHistogramProperties>:" << std::endl;
 
     if ( histogram->Integral() > 0. ) {
       Double_t q[3];
@@ -631,7 +631,7 @@ namespace svFit_namespace
       double yMaximum = histogram_density->GetBinContent(binMaximum);
       double yMaximumErr = ( histogram->GetBinContent(binMaximum) > 0. ) ?	
 	(yMaximum*histogram->GetBinError(binMaximum)/histogram->GetBinContent(binMaximum)) : 0.;
-      if ( verbosity >= 2 ) std::cout << "yMaximum = " << yMaximum << " +/- " << yMaximumErr << " @ xMaximum = " << xMaximum << std::endl;
+      if ( verbosity >= 3 ) std::cout << "yMaximum = " << yMaximum << " +/- " << yMaximumErr << " @ xMaximum = " << xMaximum << std::endl;
       if ( binMaximum > 1 && binMaximum < histogram_density->GetNbinsX() ) {
 	int binLeft       = binMaximum - 1;
 	double xLeft      = histogram_density->GetBinCenter(binLeft);
@@ -650,9 +650,9 @@ namespace svFit_namespace
       } else {
 	xMaximum_interpol = xMaximum;
       }
-      if ( verbosity >= 2 ) std::cout << "computing xMean3sigmaWithinMax:" << std::endl;
+      if ( verbosity >= 3 ) std::cout << "computing xMean3sigmaWithinMax:" << std::endl;
       xMean3sigmaWithinMax = getMeanOfBinsAboveThreshold(histogram_density, yMaximum - 3.*yMaximumErr, verbosity);
-      if ( verbosity >= 2 ) std::cout << "computing xMean5sigmaWithinMax:" << std::endl;
+      if ( verbosity >= 3 ) std::cout << "computing xMean5sigmaWithinMax:" << std::endl;
       xMean5sigmaWithinMax = getMeanOfBinsAboveThreshold(histogram_density, yMaximum - 5.*yMaximumErr, verbosity);
     } else {
       xMaximum = 0.;

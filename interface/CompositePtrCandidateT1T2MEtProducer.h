@@ -69,8 +69,6 @@ class CompositePtrCandidateT1T2MEtProducer : public edm::EDProducer
       doMtautauMin_(false), 
       cfgError_(0)
   {
-    //std::cout << "<CompositePtrCandidateT1T2MEtProducer::CompositePtrCandidateT1T2MEtProducer (moduleLabel = " << moduleLabel_ << ")>:" << std::endl;
-
     useLeadingTausOnly_ = cfg.getParameter<bool>("useLeadingTausOnly");
     srcLeg1_ = cfg.getParameter<edm::InputTag>("srcLeg1");
     srcLeg2_ = cfg.getParameter<edm::InputTag>("srcLeg2");
@@ -85,15 +83,6 @@ class CompositePtrCandidateT1T2MEtProducer : public edm::EDProducer
       srcReRecoDiTauToMEtAssociations_ = cfg.getParameter<edm::InputTag>("srcReRecoDiTauToMEtAssociations");
     }
     verbosity_ = cfg.getUntrackedParameter<int>("verbosity", 0);
-
-    //std::cout << " srcLeg1 = " << srcLeg1_.label() << std::endl;
-    //std::cout << " srcLeg2 = " << srcLeg2_.label() << std::endl;
-    //std::cout << " srcMET = " << srcMET_.label() << std::endl;
-    //std::cout << " srcPV_ = " << srcPV_.label() << std::endl;
-    //std::cout << " srcBeamSpot = " << srcBeamSpot_.label() << std::endl;
-    //std::cout << " recoMode = " << recoMode_ << std::endl;
-    //std::cout << " srcReRecoDiTauObjects = " << srcReRecoDiTauObjects_.label() << std::endl;
-    //std::cout << " srcReRecoDiTauToMEtAssociations = " << srcReRecoDiTauToMEtAssociations_.label() << std::endl;
 
 //--- check that InputTag for MET collection has been defined,
 //    in case it is needed for the reconstruction mode 
@@ -120,8 +109,6 @@ class CompositePtrCandidateT1T2MEtProducer : public edm::EDProducer
       cfgError_ = 1;
     }
 
-    //std::cout << " doSVreco = " << doSVreco_ << std::endl;
-    
     produces<CompositePtrCandidateCollection>("");
   }
 
@@ -134,7 +121,17 @@ class CompositePtrCandidateT1T2MEtProducer : public edm::EDProducer
 
   void produce(edm::Event& evt, const edm::EventSetup& es)
   {
-    //std::cout << "<CompositePtrCandidateT1T2MEtProducer::produce (moduleLabel = " << moduleLabel_ << ")>:" << std::endl;
+    if ( verbosity_ ) {
+      std::cout << "<CompositePtrCandidateT1T2MEtProducer::produce (moduleLabel = " << moduleLabel_ << ")>:" << std::endl;
+      std::cout << " srcLeg1 = " << srcLeg1_.label() << std::endl;
+      std::cout << " srcLeg2 = " << srcLeg2_.label() << std::endl;
+      std::cout << " srcMET = " << srcMET_.label() << std::endl;
+      std::cout << " srcPV_ = " << srcPV_.label() << std::endl;
+      std::cout << " srcBeamSpot = " << srcBeamSpot_.label() << std::endl;
+      std::cout << " recoMode = " << recoMode_ << std::endl;
+      std::cout << " srcReRecoDiTauObjects = " << srcReRecoDiTauObjects_.label() << std::endl;
+      std::cout << " srcReRecoDiTauToMEtAssociations = " << srcReRecoDiTauToMEtAssociations_.label() << std::endl;
+    }
 
     // CV: skip events in case there are no diTau objects to be produced
     size_t numDiTauCandidates = 0;

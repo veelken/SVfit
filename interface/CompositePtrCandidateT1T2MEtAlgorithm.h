@@ -50,9 +50,10 @@ class CompositePtrCandidateT1T2MEtAlgorithm
       timerSVFit_(0),
       timerMTauTauMin_(0)
   {
-    //std::cout << "<CompositePtrCandidateT1T2MEtAlgorithm::CompositePtrCandidateT1T2MEtAlgorithm>:" << std::endl;
-
     verbosity_ = cfg.getUntrackedParameter<int>("verbosity", 0);
+    if ( verbosity_ ) {
+      std::cout << "<CompositePtrCandidateT1T2MEtAlgorithm::CompositePtrCandidateT1T2MEtAlgorithm>:" << std::endl;
+    }
 
     if ( cfg.exists("pfMEtSign") ) {
       edm::ParameterSet cfgPFMEtSign = cfg.getParameter<edm::ParameterSet>("pfMEtSign");
@@ -80,7 +81,9 @@ class CompositePtrCandidateT1T2MEtAlgorithm
             << *svFitAlgorithmName  << std::endl;
           throw;
         }
-	//std::cout << "--> adding svFit algorithm: name = " << (*svFitAlgorithmName) << std::endl;
+	if ( verbosity_ ) {
+	  std::cout << "--> adding svFit algorithm: name = " << (*svFitAlgorithmName) << std::endl;
+	}
       }
     }
 
@@ -186,9 +189,13 @@ class CompositePtrCandidateT1T2MEtAlgorithm
 								 const std::string& recoMode,
 								 bool doSVreco, bool doPFMEtSign, bool doMtautauMin)
   { 
-    //std::cout << "<CompositePtrCandidateT1T2MEtAlgorithm::buildCompositePtrCandidate>:"<< std::endl;
-    //if ( !met.isNull() ) std::cout << " MET: pt = " << met->pt() << std::endl;
-    //else                 std::cout << " MET: none." << std::endl;
+    if ( verbosity_ ) {
+      std::cout << "<CompositePtrCandidateT1T2MEtAlgorithm::buildCompositePtrCandidate>:"<< std::endl;
+      std::cout << " leg1: Px = " << leg1->px() << ", Py = " << leg1->py() << ", Pz = " << leg1->pz() << ", En = " << leg1->energy() << " (mass = " << leg1->mass() << ")" << std::endl;
+      std::cout << " leg2: Px = " << leg2->px() << ", Py = " << leg2->py() << ", Pz = " << leg2->pz() << ", En = " << leg2->energy() << " (mass = " << leg2->mass() << ")" << std::endl;
+      if ( !met.isNull() ) std::cout << " MET: Pt = " << met->pt() << ", phi = " << met->phi() << " (Px = " << met->px() << ", Py = " << met->py() << ")" << std::endl;
+      else                 std::cout << " MET: none." << std::endl;      
+    }
     
     //timerTotal_->Start(false);
 
@@ -511,9 +518,9 @@ class CompositePtrCandidateT1T2MEtAlgorithm
       //TVectorD eigenValues(2);
       //eigenVectors = pfMEtCov_.EigenVectors(eigenValues);
       //std::cout << "1st eigen-vector: x = " << eigenVectors(0, 0) << ", y = " << eigenVectors(1, 0) << "," 
-      //	  << " eigen-value = " << eigenValues(0) << std::endl;
+      //	    << " eigen-value = " << eigenValues(0) << std::endl;
       //std::cout << "2nd eigen-vector: x = " << eigenVectors(0, 1) << ", y = " << eigenVectors(1, 1) << "," 
-      //	  << " eigen-value = " << eigenValues(1) << std::endl;
+      //	    << " eigen-value = " << eigenValues(1) << std::endl;
 
       double Vxx = svFit_namespace::square(pfMEtCov_(0, 0));
       double Vxy = svFit_namespace::square(pfMEtCov_(1, 0));
