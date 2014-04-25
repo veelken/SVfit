@@ -168,7 +168,7 @@ SVfitEventHypothesisBase* SVfitAlgorithmBase::fit(const inputParticleMap& inputP
   gSVfitAlgorithm = this;
 
   if ( verbosity_ >= 1 ) {
-    std::cout << "<SVfitAlgorithmBase::fit>:" << std::endl;
+    std::cout << "<SVfitAlgorithmBase::fit (pluginName = " << pluginName_ << ")>:" << std::endl;
     for ( std::vector<SVfitParameter>::const_iterator fitParameter = fitParameters_.begin();
 	  fitParameter != fitParameters_.end(); ++fitParameter ) {
       fitParameter->dump(std::cout);

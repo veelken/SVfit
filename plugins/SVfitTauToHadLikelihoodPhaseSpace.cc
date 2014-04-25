@@ -22,8 +22,8 @@ SVfitTauToHadLikelihoodPhaseSpace::SVfitTauToHadLikelihoodPhaseSpace(const edm::
   applySinThetaFactor_ = cfg.exists("applySinThetaFactor") ?
     cfg.getParameter<bool>("applySinThetaFactor") : false;
 
-  applyVisMassFactor_ = cfg.getParameter<bool>("applyVisMassFactor");
-  if ( applyVisMassFactor_ ) {
+  varyVisMass_ = cfg.getParameter<bool>("varyVisMass");
+  if ( varyVisMass_ ) {
     edm::FileInPath inputFileName = cfg.getParameter<edm::FileInPath>("inputFileName");
     if ( !inputFileName.isLocal() ) 
       throw cms::Exception("SVfitTauToHadLikelihoodPhaseSpace") 
@@ -39,6 +39,10 @@ SVfitTauToHadLikelihoodPhaseSpace::SVfitTauToHadLikelihoodPhaseSpace(const edm::
     lastBin_ = histogram_->GetNbinsX();
     delete inputFile;
   }
+  varyDeltaVisMass_ = cfg.getParameter<bool>("varyDeltaVisMass");
+  if ( varyDeltaVisMass_ ) {
+
+  }
 }
 
 SVfitTauToHadLikelihoodPhaseSpace::~SVfitTauToHadLikelihoodPhaseSpace()
@@ -52,7 +56,7 @@ void SVfitTauToHadLikelihoodPhaseSpace::beginJob(SVfitAlgorithmBase* algorithm)
 
   algorithm->requestFitParameter(prodParticleLabel_,   svFit_namespace::kTau_visEnFracX, pluginName_);
   algorithm->requestFitParameter(prodParticleLabel_,   svFit_namespace::kTau_phi_lab,    pluginName_);
-  if ( applyVisMassFactor_ ) {
+  if ( varyVisMass_ || varyDeltaVisMass_ ) {
     algorithm->requestFitParameter(prodParticleLabel_, svFit_namespace::kTau_visMass,    pluginName_);
   }
 }
@@ -74,7 +78,7 @@ double SVfitTauToHadLikelihoodPhaseSpace::operator()(const SVfitSingleParticleHy
   double decayAngle = hypothesis_T->gjAngle();  
   double visEnFracX = hypothesis_T->visEnFracX();
   double visMass = hypothesis_T->visMass();
-  if ( !applyVisMassFactor_ ) {
+  if ( !(varyVisMass_ || varyDeltaVisMass_) ) {
     if ( visMass < chargedPionMass ) visMass = chargedPionMass;
     if ( visMass > tauLeptonMass   ) visMass = tauLeptonMass;
   }
@@ -103,11 +107,14 @@ double SVfitTauToHadLikelihoodPhaseSpace::operator()(const SVfitSingleParticleHy
   }
   if ( applySinThetaFactor_ ) prob *= (0.5*TMath::Sin(decayAngle));
 
-  if ( applyVisMassFactor_ ) {    
+  if ( varyVisMass_ ) {    
     int bin = histogram_->FindBin(visMass);
     if ( bin <= firstBin_ ) bin = firstBin_;
     if ( bin >= lastBin_  ) bin = lastBin_;
     prob *= histogram_->GetBinContent(bin);
+  }
+  if ( varyDeltaVisMass_ ) {    
+
   }
   
   if ( applyVisPtCutCorrection_ ) {

@@ -97,32 +97,22 @@ namespace svFit_namespace
   }
 
   /// Determine Gottfried-Jackson angle from visible energy fraction X
-  double gjAngleFromX(double, double, double, double, double);
-  double gjAngleFromX_new(double, double, double, double, double, double, bool&); 
+  double gjAngleLabFrameFromX(double, double, double, double, double, double, bool&); 
 
-  double gjAngle_max(double, double, double, double);
+  double gjAngleLabFrame_max(double, double, double, double);
 
   /// Determine visible energy fraction X from Gottfried-Jackson angle 
   /// (Note: the function returns 2 solutions, corresponding to "forward"/"backward" decays)
-  std::pair<double, double> gjAngleToX(double, double, double, double, double, double, bool&);
+  std::pair<double, double> gjAngleLabFrameToX(double, double, double, double, double, double, bool&);
 
   /// Determine visible tau rest frame energy given visible mass and neutrino mass
   double pVisRestFrame(double, double, double);
 
-  /// Convert the Gottfried-Jackson angle into a lab frame opening angle
-  double gjAngleToLabFrame(double, double, double);
-
-  /// Determine the tau momentum in the lab frame given the rest frame assumptions
-  double motherMomentumLabFrame(double, double, double, double, double);
-
   /// Determine the tau direction given our parameterization
   reco::Candidate::Vector motherDirection(const reco::Candidate::Vector&, double, double);
 
-  /// Compute the tau four vector given the tau direction and momentum
-  reco::Candidate::LorentzVector motherP4(const reco::Candidate::Vector&, double, double);
-
   /// Compute decay angles in rest frame given momentum of tau lepton and visible decay product in lab frame
-  double gjAngleFromLabMomenta(const reco::Candidate::LorentzVector&, const reco::Candidate::LorentzVector&);
+  double gjAngleRestFrameFromLabMomenta(const reco::Candidate::LorentzVector&, const reco::Candidate::LorentzVector&);
   reco::Candidate::Vector normalize(const reco::Candidate::Vector&);
   double compScalarProduct(const reco::Candidate::Vector&, const reco::Candidate::Vector&);
   reco::Candidate::Vector compCrossProduct(const reco::Candidate::Vector&, const reco::Candidate::Vector&);

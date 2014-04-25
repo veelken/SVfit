@@ -31,10 +31,12 @@ class SVfitTauToHadLikelihoodPhaseSpace : public SVfitSingleParticleLikelihood
  private:
   bool applySinThetaFactor_; 
 
-  bool applyVisMassFactor_;
+  bool varyVisMass_;
   TH1* histogram_;
   int firstBin_;
   int lastBin_;
+
+  bool varyDeltaVisMass_;
 
   SVfitAlgorithmBase* algorithm_;
 };

@@ -2,10 +2,12 @@
 
 #include "FWCore/Utilities/interface/Exception.h"
 
+#include "FWCore/ServiceRegistry/interface/Service.h"
+#include "TrackingTools/Records/interface/TransientTrackRecord.h"
+
 #include "DataFormats/TauReco/interface/PFTauDecayMode.h"
 #include "DataFormats/Math/interface/deltaR.h"
 #include "DataFormats/CLHEP/interface/AlgebraicObjects.h"
-
 #include "DataFormats/Math/interface/angle.h"
 
 #include "TauAnalysis/SVfit/interface/SVfitAlgorithmBase.h"
@@ -143,62 +145,6 @@ void SVfitTauDecayBuilder::initialize(SVfitTauDecayHypothesis* hypothesis, const
     hypothesis->visMass_ = 5.1e-4;
   }
 
-  // Set tau lepton decay mode
-  hypothesis->decayMode_ = getDecayMode(visCandidate);
-
-  // If this is a leptonic tau decay, we need to setup the limits on the
-  // neutrino system invariant mass parameter.
-  // In case reconstructed mass of visible decay products exceeds 1.6 GeV,
-  // assume measurement error and "truncate" @ 1.6 GeV.
-  if ( !nuSystemIsMassless() ) {
-    SVfitParameter* fitParameter = algorithm_->getFitParameter(idxFitParameter_nuInvMass_);
-    assert(fitParameter);
-    fitParameter->setUpperLimit(svFit_namespace::tauLeptonMass - TMath::Min(hypothesis->visMass_, 1.6));
-    fitParameter->setInitialValue(0.5*(fitParameter->LowerLimit() + fitParameter->UpperLimit()));
-  }
-
-  // Extract the associated tracks, and fit a vertex if possible.
-  hypothesis->tracks_ = extractTracks(visCandidate);
-
-  // Sort tracks by **decreasing** Pt and determine "leading" (highest Pt) track
-  std::sort(hypothesis->tracks_.begin(), hypothesis->tracks_.end(), isHigherPt);
-
-  unsigned idx = 0;
-  for ( std::vector<const reco::Track*>::const_iterator track = hypothesis->tracks_.begin();
-	track != hypothesis->tracks_.end(); ++track ) {
-#ifdef SVFIT_DEBUG 
-    if ( this->verbosity_ ) std::cout << "Track #" << idx << ": Pt = " << (*track)->pt() << ", eta = " << (*track)->eta() << ", phi = " << (*track)->phi() << std::endl;
-#endif
-    const reco::HitPattern& trackHitPattern = (*track)->hitPattern();
-    if ( trackHitPattern.numberOfValidTrackerHits() >= (int)trackMinNumHits_ &&
-	 trackHitPattern.numberOfValidPixelHits() >= (int)trackMinNumPixelHits_ &&
-	 (*track)->normalizedChi2() < trackMaxChi2DoF_ &&
-	 ((*track)->ptError()/(*track)->pt()) < trackMaxDeltaPoverP_ &&
-	 (*track)->pt() > trackMinPt_ ) {
-#ifdef SVFIT_DEBUG 
-      if ( this->verbosity_ ) std::cout << " passes quality cuts." << std::endl;
-#endif
-      hypothesis->selTracks_.push_back(*track);
-    } else {
-#ifdef SVFIT_DEBUG 
-      if ( this->verbosity_ ) std::cout << " FAILS quality cuts." << std::endl;
-#endif
-    }
-    ++idx;
-  }
-
-  if ( hypothesis->selTracks_.size() >= 1 ) hypothesis->leadTrack_ = hypothesis->selTracks_.at(0);
-  else hypothesis->leadTrack_ = 0;
-
-  for ( std::vector<const reco::Track*>::const_iterator track = hypothesis->selTracks_.begin();
-	track != hypothesis->selTracks_.end(); ++track ) {
-    reco::TransientTrack trajectory = trackBuilder_->build(*track);
-    hypothesis->selTrackTrajectories_.push_back(trajectory);
-  }
-
-  if ( hypothesis->selTrackTrajectories_.size() >= 1 ) hypothesis->leadTrackTrajectory_ = &hypothesis->selTrackTrajectories_.at(0);
-  else hypothesis->leadTrackTrajectory_ = 0;
-
   if ( initializeToGen_ ) {
     bool isMatched = false;
     int idx = 0;
@@ -276,6 +222,9 @@ void SVfitTauDecayBuilder::initialize(SVfitTauDecayHypothesis* hypothesis, const
 	<< "Failed to find gen. Tau matching reconstructed decay products:" 
 	<< " Pt = " << visCandidate->pt() << ", eta = " << visCandidate->eta() << ", phi = " << visCandidate->phi() << " !!\n";
     
+    if ( fixToGenVisMass_ ) {
+      hypothesis->visMass_    = genVisP4_.mass();
+    }
     if ( fixToGenVisP4_ ) {
       hypothesis->p4_         = genVisP4_;
       hypothesis->p3Vis_unit_ = genVisP4_.Vect().Unit();
@@ -287,6 +236,68 @@ void SVfitTauDecayBuilder::initialize(SVfitTauDecayHypothesis* hypothesis, const
     if ( idxFitParameter_visMass_     != -1 ) algorithm_->setFitParameterInitialValue(idxFitParameter_visMass_,    genVisMass_);
     if ( idxFitParameter_nuInvMass_   != -1 ) algorithm_->setFitParameterInitialValue(idxFitParameter_nuInvMass_,  genNuInvMass_);
   }
+
+  // Set tau lepton decay mode
+  hypothesis->decayMode_ = getDecayMode(visCandidate);
+
+  // If this is a leptonic tau decay, we need to setup the limits on the
+  // neutrino system invariant mass parameter.
+  // In case reconstructed mass of visible decay products exceeds 1.6 GeV,
+  // assume measurement error and "truncate" @ 1.6 GeV.
+  if ( !nuSystemIsMassless() ) {
+    SVfitParameter* fitParameter = algorithm_->getFitParameter(idxFitParameter_nuInvMass_);
+    assert(fitParameter);
+    fitParameter->setUpperLimit(svFit_namespace::tauLeptonMass - TMath::Min(hypothesis->visMass_, 1.6));
+    fitParameter->setInitialValue(0.5*(fitParameter->LowerLimit() + fitParameter->UpperLimit()));
+  }
+
+  if ( idxFitParameter_visMass_ != -1 ) {
+    SVfitParameter* fitParameter = algorithm_->getFitParameter(idxFitParameter_visMass_);
+    assert(fitParameter);
+    fitParameter->setInitialValue(hypothesis->visMass_);
+  }
+
+  // Extract the associated tracks, and fit a vertex if possible.
+  hypothesis->tracks_ = extractTracks(visCandidate);
+
+  // Sort tracks by **decreasing** Pt and determine "leading" (highest Pt) track
+  std::sort(hypothesis->tracks_.begin(), hypothesis->tracks_.end(), isHigherPt);
+
+  unsigned idx = 0;
+  for ( std::vector<const reco::Track*>::const_iterator track = hypothesis->tracks_.begin();
+	track != hypothesis->tracks_.end(); ++track ) {
+#ifdef SVFIT_DEBUG 
+    if ( this->verbosity_ ) std::cout << "Track #" << idx << ": Pt = " << (*track)->pt() << ", eta = " << (*track)->eta() << ", phi = " << (*track)->phi() << std::endl;
+#endif
+    const reco::HitPattern& trackHitPattern = (*track)->hitPattern();
+    if ( trackHitPattern.numberOfValidTrackerHits() >= (int)trackMinNumHits_ &&
+	 trackHitPattern.numberOfValidPixelHits() >= (int)trackMinNumPixelHits_ &&
+	 (*track)->normalizedChi2() < trackMaxChi2DoF_ &&
+	 ((*track)->ptError()/(*track)->pt()) < trackMaxDeltaPoverP_ &&
+	 (*track)->pt() > trackMinPt_ ) {
+#ifdef SVFIT_DEBUG 
+      if ( this->verbosity_ ) std::cout << " passes quality cuts." << std::endl;
+#endif
+      hypothesis->selTracks_.push_back(*track);
+    } else {
+#ifdef SVFIT_DEBUG 
+      if ( this->verbosity_ ) std::cout << " FAILS quality cuts." << std::endl;
+#endif
+    }
+    ++idx;
+  }
+
+  if ( hypothesis->selTracks_.size() >= 1 ) hypothesis->leadTrack_ = hypothesis->selTracks_.at(0);
+  else hypothesis->leadTrack_ = 0;
+
+  for ( std::vector<const reco::Track*>::const_iterator track = hypothesis->selTracks_.begin();
+	track != hypothesis->selTracks_.end(); ++track ) {
+    reco::TransientTrack trajectory = trackBuilder_->build(*track);
+    hypothesis->selTrackTrajectories_.push_back(trajectory);
+  }
+
+  if ( hypothesis->selTrackTrajectories_.size() >= 1 ) hypothesis->leadTrackTrajectory_ = &hypothesis->selTrackTrajectories_.at(0);
+  else hypothesis->leadTrackTrajectory_ = 0;
 }
 
 void
@@ -397,53 +408,6 @@ SVfitTauDecayBuilder::finalize(SVfitSingleParticleHypothesis* hypothesis) const
   }
 }
 
-//------------------------------------------------------------------------------- BEGIN: FOR TESTING ONLY
-double getXfromGJangle(double gjAngle_rf, double gjAngle_lab, double pVis_lab, double visMass)
-{
-  std::cout << "<getXfromGJangle>:" << std::endl;
-  std::cout << " gjAngle_rf = " << gjAngle_rf << std::endl;
-  std::cout << " gjAngle_lab = " << gjAngle_lab << std::endl;
-  std::cout << " pVis_lab = " << pVis_lab << std::endl;
-  std::cout << " visMass = " << visMass << std::endl;
-  double pVis_lab2 = square(pVis_lab);
-  double visMass2 = square(visMass);
-  double enVis_lab = TMath::Sqrt(pVis_lab2 + visMass2);
-  double enVis_lab2 = square(enVis_lab);
-  double sign = ( gjAngle_rf > (0.5*TMath::Pi()) ) ? +1. : -1.; // CV: for fixed pVis, the 'forward' solution is the one corresponding to **lower** pTau !!
-  std::cout << "sign = " << sign << std::endl;
-  double pTau_lab = ((visMass2 + tauLeptonMass2)*pVis_lab*TMath::Cos(gjAngle_lab) 
-		     + sign*TMath::Sqrt(enVis_lab2*(square(visMass2 - tauLeptonMass2) - 4.*tauLeptonMass2*pVis_lab2*square(TMath::Sin(gjAngle_lab)))))/
-    (2.*(visMass2 + pVis_lab2*square(TMath::Sin(gjAngle_lab))));
-  std::cout << "pTau_lab = " << pTau_lab << std::endl;
-  double X = TMath::Sqrt((pVis_lab2 + visMass2)/(square(pTau_lab) + tauLeptonMass2));
-  std::cout << "X = " << X << std::endl;
-  return X;
-}
-
-void runConsistencyCheck(double gjAngle_rf, double gjAngle_lab_input, double pVis_lab, double visMass, double invisMass)
-{
-  std::cout << "<runConsistencyCheck>:" << std::endl;
-  std::cout << " gjAngle_rf = " << gjAngle_rf << std::endl;
-  std::cout << " gjAngle_lab (input) = " << gjAngle_lab_input << std::endl;
-  std::cout << " pVis_lab = " << pVis_lab << std::endl;
-  std::cout << " visMass = " << visMass << std::endl;
-
-  double X = getXfromGJangle(gjAngle_rf, gjAngle_lab_input, pVis_lab, visMass);
-
-  double enVis_lab = TMath::Sqrt(square(pVis_lab) + square(visMass));
-  std::cout << " enVis_lab = " << enVis_lab << std::endl;
-
-  bool isValidSolution = true;
-  double gjAngle_lab_output = gjAngleFromX_new(X, visMass, invisMass, pVis_lab, enVis_lab, tauLeptonMass, isValidSolution);
-  assert(isValidSolution);
-  std::cout << " gjAngle_lab (output) = " << gjAngle_lab_output << std::endl;
-
-  const double epsilon = 1.e-6;
-       if ( TMath::Abs(gjAngle_lab_output - gjAngle_lab_input) < epsilon ) std::cout << "CHECK passed." << std::endl;
-  else std::cout << "CHECK failed !!" << std::endl;
-}
-//------------------------------------------------------------------------------- END: FOR TESTING ONLY
-
 bool SVfitTauDecayBuilder::applyFitParameter(SVfitSingleParticleHypothesis* hypothesis, const double* param) const
 {
 #ifdef SVFIT_DEBUG 
@@ -456,8 +420,8 @@ bool SVfitTauDecayBuilder::applyFitParameter(SVfitSingleParticleHypothesis* hypo
   SVfitTauDecayHypothesis* hypothesis_T = dynamic_cast<SVfitTauDecayHypothesis*>(hypothesis);
   assert(hypothesis_T);
   
-  if ( idxFitParameter_visMass_  != -1 ) {
-    if ( fixToGenVisMass_ ) hypothesis_T->visMass_ = genVisMass_;
+  if ( idxFitParameter_visMass_ != -1 ) {
+    if ( fixToGenVisMass_ || fixToGenVisP4_ ) hypothesis_T->visMass_ = genVisMass_;
     else hypothesis_T->visMass_ = param[idxFitParameter_visMass_];
   }
 
@@ -475,132 +439,13 @@ bool SVfitTauDecayBuilder::applyFitParameter(SVfitSingleParticleHypothesis* hypo
   const reco::Candidate::Vector& p3Vis_unit = hypothesis_T->p3Vis_unit();
   
   bool isValidSolution = true;
-
-/*
-//--- compute energy and momentum of visible decay products in tau lepton rest-frame
-  double pVis2_rf = (tauLeptonMass2 - square(visMass + nuInvMass))*(tauLeptonMass2 - square(visMass - nuInvMass))/(4.*tauLeptonMass2);
-  if ( pVis2_rf < 0. ) {
-    pVis2_rf = 0.;
-    isValidSolution = false;
-  }
-  double pVis_rf = TMath::Sqrt(pVis2_rf);
-  double enVis_rf = TMath::Sqrt(square(pVis_rf) + square(visMass));
-  //std::cout << "pVis_rf = " << pVis_rf << ", enVis_rf = " << enVis_rf << std::endl;
-
-//--- compute relativistic beta factor
-  double beta2 = 1. - square(visEnFracX*tauLeptonMass/enVis_lab);
-  if ( !(beta2 >= 0.) ) {
-    std::cout << "<SVfitTauDecayBuilder::applyFitParameter>:" << std::endl;
-    std::cout << " leg: Pt = " << hypothesis_T->particle()->pt() << "," 
-	      << " eta = " << hypothesis_T->particle()->eta() << "," 
-	      << " phi = " << hypothesis_T->particle()->phi() << ","
-	      << " mass = " << hypothesis_T->particle()->mass() << std::endl;
-    std::cout << " visEnFracX = " << visEnFracX << std::endl;
-    std::cout << " tauLeptonMass = " << tauLeptonMass << std::endl;
-    std::cout << " enVis_lab = " << enVis_lab << std::endl;
-    std::cout << "(fixToGenVisEnFracX = " << fixToGenVisEnFracX_ << ")" << std::endl;
-    std::cout << "(fixToGenPhiLab = " << fixToGenPhiLab_ << ")" << std::endl;
-    std::cout << "(fixToGenVisMass = " << fixToGenVisMass_ << ")" << std::endl;
-    std::cout << "(fixToGenNuInvMass = " << fixToGenNuInvMass_ << ")" << std::endl;
-    std::cout << "(fixToGenDecayDistance = " << fixToGenDecayDistance_ << ")" << std::endl;
-    std::cout << " assert TRIGGERED !!!" << std::endl;
-  }
-  assert(beta2 >= 0.);
-  double beta = TMath::Sqrt(beta2);
-  //std::cout << "beta = " << beta << std::endl;
-
-//--- compute Gottfried-Jackson angle
-//   (angle of visible decay products wrt. tau lepton flight direction)
-  double cosGjAngle_rf = (visEnFracX*tauLeptonMass - enVis_rf)/(beta*pVis_rf);  
-  if ( cosGjAngle_rf < -1. ) {
-#ifdef SVFIT_DEBUG 
-    if ( verbosity_ >= 2 ) std::cout << "cosGjAngle_rf = " << cosGjAngle_rf << " --> setting isValidSolution = false." << std::endl;
-#endif
-    cosGjAngle_rf = -1.;
-    isValidSolution = false;
-  } else if ( cosGjAngle_rf > +1. ) {
-#ifdef SVFIT_DEBUG 
-    if ( verbosity_ >= 2 ) std::cout << "cosGjAngle_rf = " << cosGjAngle_rf << " --> setting isValidSolution = false." << std::endl;
-#endif
-    cosGjAngle_rf = +1.;
-    isValidSolution = false;
-  }
-  double gjAngle_rf = TMath::ACos(cosGjAngle_rf);
-  //std::cout << "gjAngle_rf = " << gjAngle_rf << std::endl;
-
-//--- compute component of visible momentum perpendicular to tau flight direction
-//   (NB: the perpendicular component of the visible momentum vector
-//        is invariant under Lorentz boost in tau direction, 
-//        i.e. is identical in tau rest-frame and laboratory frame)
-  double pVis_perp = pVis_rf*TMath::Sin(gjAngle_rf);
-  //std::cout << "pVis_perp = " << pVis_perp << std::endl;
-
-  double gjAngle_lab = TMath::ASin(pVis_perp/pVis_lab);
-  //std::cout << "gjAngle_lab = " << gjAngle_lab << std::endl;
- */
   
 //--- compute Gottfried-Jackson angle
 //   (angle of visible decay products wrt. tau lepton flight direction)
-  double gjAngle_lab = gjAngleFromX_new(visEnFracX, visMass, nuInvMass, pVis_lab, enVis_lab, tauLeptonMass, isValidSolution);
+  double gjAngle_lab = gjAngleLabFrameFromX(visEnFracX, visMass, nuInvMass, pVis_lab, enVis_lab, tauLeptonMass, isValidSolution);
 #ifdef SVFIT_DEBUG 
   if ( verbosity_ >= 2 ) std::cout << "gjAngle_lab = " << gjAngle_lab << std::endl;
 #endif
-
-/*
-//--- compute energy and momentum of visible decay products in tau lepton rest-frame
-  double pVis2_rf = (tauLeptonMass2 - square(visMass + nuInvMass))*(tauLeptonMass2 - square(visMass - nuInvMass))/(4.*tauLeptonMass2);
-  if ( pVis2_rf < 0. ) {
-    pVis2_rf = 0.;
-    isValidSolution = false;
-  }
-  double pVis_rf = TMath::Sqrt(pVis2_rf);
-#ifdef SVFIT_DEBUG 
-  if ( verbosity_ >= 2 ) std::cout << "pVis_rf = " << pVis_rf << std::endl;
-#endif
-
-//--- compute component of visible momentum perpendicular to tau flight direction
-//   (NB: the perpendicular component of the visible momentum vector
-//        is invariant under Lorentz boost in tau direction, 
-//        i.e. is identical in tau rest-frame and laboratory frame)
-  double pVis_perp = pVis_lab*TMath::Sin(gjAngle_lab);
-#ifdef SVFIT_DEBUG 
-  if ( verbosity_ >= 2 ) std::cout << "pVis_perp = " << pVis_perp << std::endl;
-#endif
-    
-  double gamma_tau = Etau_/Mtau_;
-    std::cout << "gamma_tau = " << gamma_tau << std::endl;
-    double beta_tau = TMath::Sqrt(1. - 1./(gamma_tau*gamma_tau));
-    std::cout << "beta_tau = " << beta_tau << std::endl;
-    double pVis_parl_rf = -beta_tau*gamma_tau*Ehad + gamma_tau*TMath::Cos(alpha)*Phad;
-    std::cout << "pVis_parl_rf = " << pVis_parl_rf << std::endl;
-    double alpha_rf = TMath::ATan2(pVis_perp, pVis_parl_rf);
-
-  // CV: the ratio pVis_perp/pVis_rf determines only sin(gjAngle_rf).
-  //     Distinguish 'forward' from 'backward' decays depending on whether the visible tau decay products
-  //     carry more or less energy than a tau with maximum Gottfried-Jackson angle 
-  //    (cf. Fig. 4.3 of AN-2010/256:
-  //       http://cms.cern.ch/iCMS/jsp/openfile.jsp?tp=draft&files=AN2010_256_v2.pdf
-  //     for illustration)
-    //  double gjAngle_lab_max = TMath::ASin((tauLeptonMass2 - square(visMass))/(2.*tauLeptonMass)
-
-    //as function of X = Etau/Evis
-    //     was obtained by solving equation (1) of AN-2010/256:
-    //       http://cms.cern.ch/iCMS/jsp/openfile.jsp?tp=draft&files=AN2010_256_v2.pdf
-    //     for cosThetaGJ
-
-the visible tau decay products
-  //     carry more or or less energy
-
-  //     Distinguish 'forward' from 'backward' decays depending on whether the visible tau decay products
-  //     carry more
-energy fraction X = Etau/Evis
-  //     is greater or smaller than 50%.
-  double gjAngle_rf = ( visEnFracX > 0.5 ) ?
-    TMath::ASin(pVis_perp/pVis_rf) : (TMath::Pi() - TMath::ASin(pVis_perp/pVis_rf));
-#ifdef SVFIT_DEBUG 
-  if ( verbosity_ >= 2 ) std::cout << "gjAngle_rf = " << gjAngle_rf << std::endl;
-#endif
- */
 
 //--- compute tau lepton energy and momentum in laboratory frame  
   double enTau_lab = enVis_lab/visEnFracX;
@@ -732,29 +577,7 @@ energy fraction X = Etau/Evis
   if ( verbosity_ ) {
     std::cout << "<SVfitTauDecayBuilder::applyFitParameter>:" << std::endl;
     std::cout << " hypothesis " << hypothesis->name() << " #" << hypothesis->barcode() << ": " << hypothesis << std::endl;
-    std::cout << " visEnFracX = " << visEnFracX << " (getXfromGJangle = " << getXfromGJangle(gjAngle_rf, gjAngle_lab, pVis_lab, visMass) << ")" << std::endl;
-/*
-std::cout << "getXfromGJangle(0.1, 0.005, 25., 1.2) = " << getXfromGJangle(0.1, 0.005, 25., 1.2) << std::endl;
-std::cout << "getXfromGJangle(3.0, 0.005, 25., 1.2) = " << getXfromGJangle(3.0, 0.005, 25., 1.2) << std::endl;
-std::cout << "getXfromGJangle(0.1, 0.015, 25., 1.2) = " << getXfromGJangle(0.1, 0.015, 25., 1.2) << std::endl;
-std::cout << "getXfromGJangle(3.0, 0.015, 25., 1.2) = " << getXfromGJangle(3.0, 0.015, 25., 1.2) << std::endl;
-std::cout << "getXfromGJangle(0.1, 0.005, 40., 1.2) = " << getXfromGJangle(0.1, 0.005, 40., 1.2) << std::endl;
-std::cout << "getXfromGJangle(3.0, 0.005, 40., 1.2) = " << getXfromGJangle(3.0, 0.005, 40., 1.2) << std::endl;
-std::cout << "getXfromGJangle(0.1, 0.010, 40., 1.2) = " << getXfromGJangle(0.1, 0.010, 40., 1.2) << std::endl;
-std::cout << "getXfromGJangle(3.0, 0.010, 40., 1.2) = " << getXfromGJangle(3.0, 0.010, 40., 1.2) << std::endl;
-assert(0);
- */
-/*
-    runConsistencyCheck(0.1, 0.005, 25., 1.2, 0.);
-    runConsistencyCheck(3.0, 0.005, 25., 1.2, 0.);
-    runConsistencyCheck(0.1, 0.015, 25., 1.2, 0.);
-    runConsistencyCheck(3.0, 0.015, 25., 1.2, 0.);
-    runConsistencyCheck(0.1, 0.005, 40., 1.2, 0.);
-    runConsistencyCheck(3.0, 0.005, 40., 1.2, 0.);
-    runConsistencyCheck(0.1, 0.010, 40., 1.2, 0.);
-    runConsistencyCheck(3.0, 0.010, 40., 1.2, 0.);    
-    assert(0);
- */ 
+    std::cout << " visEnFracX = " << visEnFracX << std::endl;
     std::cout << " phi_lab = " << phi_lab << std::endl;
     std::cout << " visMass = " << visMass << std::endl;
     std::cout << " nuInvMass = " << hypothesis_T->p4invis_rf_.mass() << std::endl;

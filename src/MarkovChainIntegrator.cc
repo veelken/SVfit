@@ -268,6 +268,7 @@ void MarkovChainIntegrator::integrate(const std::vector<double>& xMin, const std
     unsigned iTry = 0;
     while ( !isValidStartPos && iTry < maxCallsStartingPos_ ) {
       initializeStartPosition_and_Momentum();
+
 //--- CV: check if start-position is within "valid" (physically allowed) region 
       bool isWithinPhysicalRegion = true;
       if ( startPosition_and_MomentumFinder_ ) {
@@ -440,7 +441,7 @@ void MarkovChainIntegrator::initializeStartPosition_and_Momentum()
     }
   }
 #ifdef SVFIT_DEBUG 
-  if ( verbosity_ >= 1 ) {
+  if ( verbosity_ >= 2 ) {
     std::cout << "<MarkovChainIntegrator::initializeStartPosition_and_Momentum>:" << std::endl;
     std::cout << " q = " << format_vdouble(q_) << std::endl;
   }
@@ -656,15 +657,23 @@ void MarkovChainIntegrator::makeDynamicMoves(const std::vector<double>& epsilon)
 
 void MarkovChainIntegrator::updateX(const std::vector<double>& q)
 {
-  //std::cout << "<MarkovChainIntegrator::updateX>:" << std::endl;
-  //std::cout << " q = " << format_vdouble(q) << std::endl;
+#ifdef SVFIT_DEBUG 
+  if ( verbosity_ >= 3 ) {
+    std::cout << "<MarkovChainIntegrator::updateX>:" << std::endl;
+    std::cout << " q = " << format_vdouble(q) << std::endl;
+  }
+#endif  
   for ( unsigned iDimension = 0; iDimension < numDimensions_; ++iDimension ) {
     double q_i = q[iDimension];
     x_[iDimension] = (1. - q_i)*xMin_[iDimension] + q_i*xMax_[iDimension];
-    //std::cout << " x[" << iDimension << "] = " << x_[iDimension] << " ";
-    //std::cout << "(xMin[" << iDimension << "] = " << xMin_[iDimension] << ","
-    //          << " xMax[" << iDimension << "] = " << xMax_[iDimension] << ")";
-    //std::cout << std::endl;
+#ifdef SVFIT_DEBUG 
+    if ( verbosity_ >= 3 ) {
+      std::cout << " x[" << iDimension << "] = " << x_[iDimension] << " ";
+      std::cout << "(xMin[" << iDimension << "] = " << xMin_[iDimension] << ","
+		<< " xMax[" << iDimension << "] = " << xMax_[iDimension] << ")";
+      std::cout << std::endl;
+    }
+#endif  
   }
 }
 

@@ -566,6 +566,17 @@ double SVfitAlgorithmByIntegration::nll(const double* x, const double* param) co
     }
   }
 
+#ifdef SVFIT_DEBUG     
+  if ( verbosity_ >= 2 ) {
+    std::vector<double> fitParameterValues_vector(fitParameters_.size());
+    unsigned numFitParameters = fitParameters_.size(); 
+    for ( unsigned iFitParameter = 0; iFitParameter < numFitParameters; ++iFitParameter ) {
+      fitParameterValues_vector[iFitParameter] = fitParameterValues_[iFitParameter];
+    }
+    std::cout << " fitParameterValues = " << format_vdouble(fitParameterValues_vector) << std::endl;
+  }
+#endif
+
 //--- build event, resonance and particle hypotheses
   currentEventHypothesis_isValidSolution_ = eventModel_->builder_->applyFitParameter(currentEventHypothesis_, fitParameterValues_);
 

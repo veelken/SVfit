@@ -491,6 +491,20 @@ TH1* compHistogramDensity(const TH1* histogram)
 
 void SVfitAlgorithmByIntegration2::fitImp() const
 {
+  for ( std::vector<fitParameterReplacementType*>::const_iterator fitParameterReplacement = fitParameterReplacements_.begin();
+	fitParameterReplacement != fitParameterReplacements_.end(); ++fitParameterReplacement ) {
+    for ( std::vector<replaceParBase*>::const_iterator par = (*fitParameterReplacement)->parForReplacements_.begin();
+	  par != (*fitParameterReplacement)->parForReplacements_.end(); ++par ) {
+      replaceParByResonanceHypothesis* par_resonance = dynamic_cast<replaceParByResonanceHypothesis*>(*par);
+      if ( par_resonance ) {
+	const SVfitResonanceHypothesis* resonance = 
+          dynamic_cast<const SVfitResonanceHypothesis*>(
+	    currentEventHypothesis_->SVfitEventHypothesisBase::resonance(par_resonance->resonanceName_));
+	par_resonance->value_ = (*par_resonance->valueExtractor_)(*resonance);
+      }
+    }
+  }
+
   for ( unsigned iDimension = 0; iDimension < numDimensions_; ++iDimension ) {
     const SVfitParameter* fitParameter_ref = fitParameterMappings_[iDimension].base_; 
     startPosition_[iDimension] = fitParameter_ref->InitialValue();
@@ -926,9 +940,22 @@ bool SVfitAlgorithmByIntegration2::update(const double* x, const double* param) 
 	 fitParameterValue <= fitParameters_[(*fitParameterReplacement)->idxToReplace_].UpperLimit() ) {
       fitParameterValues_[(*fitParameterReplacement)->idxToReplace_] = fitParameterValue;
     } else {
+      //if ( fitParameterValue < fitParameters_[(*fitParameterReplacement)->idxToReplace_].LowerLimit() ) fitParameterValue = fitParameters_[(*fitParameterReplacement)->idxToReplace_].LowerLimit();
+      //if ( fitParameterValue > fitParameters_[(*fitParameterReplacement)->idxToReplace_].UpperLimit() ) fitParameterValue = fitParameters_[(*fitParameterReplacement)->idxToReplace_].UpperLimit();
       return std::numeric_limits<float>::max();
     }
   }
+
+#ifdef SVFIT_DEBUG     
+  if ( verbosity_ >= 2 ) {
+    std::vector<double> fitParameterValues_vector(fitParameters_.size());
+    unsigned numFitParameters = fitParameters_.size(); 
+    for ( unsigned iFitParameter = 0; iFitParameter < numFitParameters; ++iFitParameter ) {
+      fitParameterValues_vector[iFitParameter] = fitParameterValues_[iFitParameter];
+    }
+    std::cout << " fitParameterValues = " << format_vdouble(fitParameterValues_vector) << std::endl;
+  }
+#endif
 
 //--- build event, resonance and particle hypotheses
 //    and check if hypothesis corresponds to a "valid" (physically allowed) solution

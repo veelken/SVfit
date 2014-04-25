@@ -28,7 +28,7 @@ namespace svFit_namespace
     Double_t fY = toRotate.Y();
     Double_t fZ = toRotate.Z();
 
-    if ( up ) {
+    if ( up > 0. ) {
       up = TMath::Sqrt(up);
       Double_t px = fX;
       Double_t py = fY;
@@ -58,16 +58,7 @@ namespace svFit_namespace
     return ROOT::Math::VectorUtil::boost(p4ToBoost, -boost);
   }
 
-  double gjAngleFromX(double x, double visMass, double pVis_rf, double enVis_lab, double motherMass) 
-  {
-    double enVis_rf = energyFromMomentum(pVis_rf, visMass);
-    double beta = TMath::Sqrt(1. - square(motherMass*x/enVis_lab));
-    double cosGjAngle = (motherMass*x - enVis_rf)/(pVis_rf*beta);
-    double gjAngle = TMath::ACos(cosGjAngle);
-    return gjAngle;
-  }
-
-  double gjAngleFromX_new(double x, double visMass, double invisMass, double pVis_lab, double enVis_lab, double motherMass, bool& isValidSolution) 
+  double gjAngleLabFrameFromX(double x, double visMass, double invisMass, double pVis_lab, double enVis_lab, double motherMass, bool& isValidSolution) 
   {
     // CV: the expression for the Gottfried-Jackson angle as function of X = Etau/Evis
     //     was obtained by solving equation (1) of AN-2010/256:
@@ -75,7 +66,7 @@ namespace svFit_namespace
     //     for cosThetaGJ
     //    (generalized to the case of non-zero mass of the neutrino system in leptonic tau decays, using Mathematica)
 
-    //std::cout << "<gjAngleFromX_new>:" << std::endl;
+    //std::cout << "<gjAngleLabFrameFromX>:" << std::endl;
     //std::cout << " x = " << x << std::endl;
     //std::cout << " visMass = " << visMass << std::endl;
     //std::cout << " invisMass = " << invisMass << std::endl;
@@ -118,9 +109,9 @@ namespace svFit_namespace
     return gjAngle;
   }
 
-  double gjAngle_max(double visMass, double invisMass, double pVis_lab, double motherMass)
+  double gjAngleLabFrame_max(double visMass, double invisMass, double pVis_lab, double motherMass)
   {
-    //std::cout << "<gjAngle_max>:" << std::endl;
+    //std::cout << "<gjAngleLabFrame_max>:" << std::endl;
     
     double visMass2 = visMass*visMass;
     double invisMass2 = invisMass*invisMass;
@@ -133,7 +124,7 @@ namespace svFit_namespace
     return gjAngleMax_lab;
   }
 
-  std::pair<double, double> gjAngleToX(double gjAngle_lab, double visMass, double invisMass, double pVis_lab, double enVis_lab, double motherMass, bool& isValidSolution)
+  std::pair<double, double> gjAngleLabFrameToX(double gjAngle_lab, double visMass, double invisMass, double pVis_lab, double enVis_lab, double motherMass, bool& isValidSolution)
   {
     // CV: the expression for the Gottfried-Jackson angle as function of X = Etau/Evis
     //     was obtained by solving equation (1) of AN-2010/256:
@@ -141,7 +132,7 @@ namespace svFit_namespace
     //     for cosThetaGJ
     //    (generalized to the case of non-zero mass of the neutrino system in leptonic tau decays, using Mathematica)
 
-    //std::cout << "<gjAngleToX>:" << std::endl;
+    //std::cout << "<gjAngleLabFrameToX>:" << std::endl;
     //std::cout << " gjAngle_lab = " << gjAngle_lab << std::endl;
     //std::cout << " visMass = " << visMass << std::endl;
     //std::cout << " invisMass = " << invisMass << std::endl;
@@ -155,7 +146,7 @@ namespace svFit_namespace
     double enVis2_lab = enVis_lab*enVis_lab;
     double motherMass2 = motherMass*motherMass;
 
-    double gjAngle_max_lab = gjAngle_max(visMass, invisMass, pVis_lab, motherMass);
+    double gjAngle_max_lab = gjAngleLabFrame_max(visMass, invisMass, pVis_lab, motherMass);
     if ( gjAngle_lab > gjAngle_max_lab ) {
       //edm::LogWarning ("gjAngleToX")
       //  << " Failed to find valid solution !!";
@@ -219,40 +210,6 @@ namespace svFit_namespace
     return pVis;
   }
 
-  double gjAngleToLabFrame(double pVisRestFrame, double gjAngle, double pVisLabFrame)
-  {
-    // Get the compenent of the rest frame momentum perpindicular to the tau
-    // boost direction. This quantity is Lorentz invariant.
-    double pVisRestFramePerp = pVisRestFrame*TMath::Sin(gjAngle);
-
-    // Determine the corresponding opening angle in the LAB frame
-    double gjAngleLabFrame = TMath::ASin(pVisRestFramePerp/pVisLabFrame);
-
-    return gjAngleLabFrame;
-  }
-
-  double motherMomentumLabFrame(double visMass, double pVisRestFrame, double gjAngle, double pVisLabFrame, double motherMass)
-  {
-    // Determine the corresponding opening angle in the LAB frame
-    double angleVisLabFrame = gjAngleToLabFrame(pVisRestFrame, gjAngle, pVisLabFrame);
-
-    // Get the visible momentum perpindicular/parallel to the tau boost direction in the LAB
-    double pVisLabFrame_parallel = pVisLabFrame*TMath::Cos(angleVisLabFrame);
-
-    // Now use the Lorentz equation for pVis along the tau direction to solve for
-    // the gamma of the tau boost.
-    double pVisRestFrame_parallel = pVisRestFrame*TMath::Cos(gjAngle);
-
-    double enVisRestFrame = TMath::Sqrt(square(visMass) + square(pVisRestFrame));
-
-    double gamma = (enVisRestFrame*TMath::Sqrt(square(enVisRestFrame) + square(pVisLabFrame_parallel) - square(pVisRestFrame_parallel)) 
-                  - pVisRestFrame_parallel*pVisLabFrame_parallel)/(square(enVisRestFrame) - square(pVisRestFrame_parallel));
-
-    double pMotherLabFrame = TMath::Sqrt(square(gamma) - 1)*motherMass;
-
-    return pMotherLabFrame;
-  }
-
   reco::Candidate::Vector motherDirection(const reco::Candidate::Vector& pVisLabFrame, double angleVisLabFrame, double phiLab) 
   {
     // The direction is defined using polar coordinates in a system where the visible energy
@@ -263,34 +220,19 @@ namespace svFit_namespace
     return rotateUz(motherDirectionVisibleSystem, pVisLabFrame.Unit());
   }
 
-  reco::Candidate::LorentzVector motherP4(
-    const reco::Candidate::Vector& motherDirection, double motherMomentumLabFrame, double motherMass) 
+  double gjAngleRestFrameFromLabMomenta(const reco::Candidate::LorentzVector& motherP4, const reco::Candidate::LorentzVector& visP4)
   {
-    // NB: tauDirection must be a unit vector !
-    reco::Candidate::LorentzVector motherP4LabFrame =
-      reco::Candidate::LorentzVector(
-          motherDirection.x()*motherMomentumLabFrame,
-          motherDirection.y()*motherMomentumLabFrame,
-          motherDirection.z()*motherMomentumLabFrame,
-          TMath::Sqrt(motherMomentumLabFrame*motherMomentumLabFrame
-            + motherMass*motherMass));
-
-    return motherP4LabFrame;
-  }
-
-  double gjAngleFromLabMomenta(const reco::Candidate::LorentzVector& motherP4, const reco::Candidate::LorentzVector& visP4)
-  {
-    double gjAngle = 0.;
+    double gjAngle_rf = 0.;
     reco::Candidate::LorentzVector visP4_rf = boostToCOM(motherP4, visP4);
     if ( (motherP4.pt()*visP4_rf.pt()) > 0. ) {
       double scalarProduct = (motherP4.px()*visP4_rf.px() 
                             + motherP4.py()*visP4_rf.py() 
                             + motherP4.pz()*visP4_rf.pz())/(motherP4.P()*visP4_rf.P());
-      gjAngle = TMath::ACos(scalarProduct);
+      gjAngle_rf = TMath::ACos(scalarProduct);
     }
-    return gjAngle;
+    return gjAngle_rf;
   }
-
+ 
   reco::Candidate::Vector normalize(const reco::Candidate::Vector& p)
   {
     double p_x = p.x();
