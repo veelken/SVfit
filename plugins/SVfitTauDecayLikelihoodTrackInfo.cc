@@ -13,6 +13,8 @@
 
 using namespace svFit_namespace;
 
+#define SVFIT_DEBUG 1
+
 SVfitTauDecayLikelihoodTrackInfo::SVfitTauDecayLikelihoodTrackInfo(const edm::ParameterSet& cfg)
   : SVfitSingleParticleLikelihood(cfg),
     algorithm_(0)
@@ -102,9 +104,9 @@ double SVfitTauDecayLikelihoodTrackInfo::operator()(const SVfitSingleParticleHyp
 //    The likelihood is computed as the product of probabilities for the tracks
 //    to be compatible with the hypothetic secondary vertex of the tau lepton decay
 //   (distance of closest approach of track to secondary vertex divided by estimated uncertainties of track extrapolation)
-
+#ifdef SVFIT_DEBUG 
   if ( this->verbosity_ ) std::cout << "<SVfitTauDecayLikelihoodTrackInfo::operator()>:" << std::endl;
-
+#endif
   const SVfitTauDecayHypothesis* hypothesis_T = dynamic_cast<const SVfitTauDecayHypothesis*>(hypothesis);
   assert(hypothesis_T != 0);
   if ( verbosity_ >= 2 ) {
@@ -125,6 +127,7 @@ double SVfitTauDecayLikelihoodTrackInfo::operator()(const SVfitSingleParticleHyp
 	}
       }
       nll_dca = -logGaussian3d(residual, reconstructed_wrt_expectedDecayVertexCov);      
+#ifdef SVFIT_DEBUG 
       if ( verbosity_ >= 2 ) {
 	std::cout << "processing 3-Prong case:" << std::endl;
 	printVector("reconstructedDecayVertexPos", hypothesis_T->reconstructedDecayVertexPos());
@@ -136,6 +139,7 @@ double SVfitTauDecayLikelihoodTrackInfo::operator()(const SVfitSingleParticleHyp
 	std::cout << "sigma(approx.) = " << TMath::Sqrt(sigma2) << std::endl;
 	std::cout << " -log(P_dca) = " << nll_dca << std::endl;
       }
+#endif
     } else if ( !ignore1Prongs_ && hypothesis_T->leadTrackTrajectory() ) {
       if ( !hypothesis_T->leadTrackExtrapolationError() ) {
 	AlgebraicVector3 u1, u2, u3;
@@ -161,6 +165,7 @@ double SVfitTauDecayLikelihoodTrackInfo::operator()(const SVfitSingleParticleHyp
 	  }
 	}
 	nll_dca = -logGaussian2d(residual2d, reconstructed_wrt_expectedDecayVertexCov2d);
+#ifdef SVFIT_DEBUG 
 	if ( verbosity_ >= 2 ) {
 	  std::cout << "processing 1-Prong case:" << std::endl;
 	  printVector("reconstructedDecayVertexPos", hypothesis_T->reconstructedDecayVertexPos());
@@ -176,13 +181,16 @@ double SVfitTauDecayLikelihoodTrackInfo::operator()(const SVfitSingleParticleHyp
 	  std::cout << "sigma(approx.) = " << TMath::Sqrt(sigma2) << std::endl;
 	  std::cout << " -log(P_dca) = " << nll_dca << std::endl;
 	}
+#endif
       } else {
 	const SVfitEventHypothesis* event = hypothesis_T->mother()->eventHypothesis();
 	nll_dca = -logGaussian(TMath::Sqrt(norm2(event->eventVertexPos() - hypothesis_T->expectedDecayVertexPos())), 1.e-6);
+#ifdef SVFIT_DEBUG 
 	if ( verbosity_ >= 2 ) {
 	  std::cout << "processing 1-Prong case:" << std::endl;
 	  std::cout << " lead. Track extrapolation failed --> setting -log(P_dca) = " << nll_dca << std::endl;
 	}
+#endif
       }
     }
   }
@@ -198,15 +206,19 @@ double SVfitTauDecayLikelihoodTrackInfo::operator()(const SVfitSingleParticleHyp
   }
    
   double nll = nll_dca + nll_lifetime + nll_penalty;
+#ifdef SVFIT_DEBUG 
   if ( verbosity_ >= 2 ) {
     std::cout << "--> -log(P) = " << nll
 	      << " ( -log(P_dca) = " << nll_dca << ", -log(P_lifetime) = " << nll_lifetime << ", -log(P_penalty) = " << nll_penalty << ")" << std::endl;
   }
+#endif
   double nll_JacobiFactor = -TMath::Log(hypothesis_T->expectedDecayDistanceJacobiFactor());
   nll += nll_JacobiFactor;
 
   double prob = TMath::Exp(-nll);
+#ifdef SVFIT_DEBUG 
   if ( this->verbosity_ ) std::cout << "--> prob = " << prob << std::endl;
+#endif
 
   return prob;
 }

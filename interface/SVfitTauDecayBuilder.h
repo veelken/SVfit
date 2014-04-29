@@ -85,6 +85,7 @@ class SVfitTauDecayBuilder : public SVfitSingleParticleBuilderBase
     int idxFitParameter_visEnFracX_;
     int idxFitParameter_phi_lab_;
     int idxFitParameter_visMass_;   // used for hadronic decays only
+    int idxFitParameter_shiftVisPt_;
     int idxFitParameter_nuInvMass_; // used for leptonic decays only
     int idxFitParameter_decayDistance_shift_;
     

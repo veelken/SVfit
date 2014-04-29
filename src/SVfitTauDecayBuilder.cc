@@ -28,7 +28,7 @@ SVfitTauDecayBuilder::SVfitTauDecayBuilder(const edm::ParameterSet& cfg)
   : SVfitSingleParticleBuilderBase(cfg),
     algorithm_(0),
     trackBuilder_(0),
-    decayVertexFitAlgorithm_(0),
+    decayVertexFitAlgorithm_(0),    
     idxFitParameter_nuInvMass_(-1)
 {
   edm::ParameterSet cfgTrackQualityCuts = cfg.getParameter<edm::ParameterSet>("trackQualityCuts");
@@ -81,6 +81,7 @@ void SVfitTauDecayBuilder::beginJob(SVfitAlgorithmBase* algorithm)
   idxFitParameter_visEnFracX_          = getFitParameterIdx(algorithm, prodParticleLabel_, svFit_namespace::kTau_visEnFracX);
   idxFitParameter_phi_lab_             = getFitParameterIdx(algorithm, prodParticleLabel_, svFit_namespace::kTau_phi_lab);
   idxFitParameter_visMass_             = getFitParameterIdx(algorithm, prodParticleLabel_, svFit_namespace::kTau_visMass, true);
+  idxFitParameter_shiftVisPt_          = getFitParameterIdx(algorithm, prodParticleLabel_, svFit_namespace::kTau_shiftVisPt, true);
   idxFitParameter_nuInvMass_           = getFitParameterIdx(algorithm, prodParticleLabel_, svFit_namespace::kTau_nuInvMass, true);
   idxFitParameter_decayDistance_shift_ = getFitParameterIdx(algorithm, prodParticleLabel_, svFit_namespace::kTau_decayDistance_lab_shift, true);
 #ifdef SVFIT_DEBUG 
@@ -90,6 +91,7 @@ void SVfitTauDecayBuilder::beginJob(SVfitAlgorithmBase* algorithm)
     std::cout << " idxFitParameter_visEnFracX = " << idxFitParameter_visEnFracX_ << std::endl;
     std::cout << " idxFitParameter_phi_lab = " << idxFitParameter_phi_lab_ << std::endl;
     std::cout << " idxFitParameter_visMass = " << idxFitParameter_visMass_ << std::endl;
+    std::cout << " idxFitParameter_shiftVisPt = " << idxFitParameter_shiftVisPt_ << std::endl;
     std::cout << " idxFitParameter_nuInvMass = " << idxFitParameter_nuInvMass_ << std::endl;
     std::cout << " idxFitParameter_decayDistance_shift = " << idxFitParameter_decayDistance_shift_ << std::endl;
   }
@@ -97,6 +99,7 @@ void SVfitTauDecayBuilder::beginJob(SVfitAlgorithmBase* algorithm)
   if ( fixToGenVisEnFracX_    && idxFitParameter_visEnFracX_          != -1 ) algorithm->fixFitParameter(idxFitParameter_visEnFracX_);
   if ( fixToGenPhiLab_        && idxFitParameter_phi_lab_             != -1 ) algorithm->fixFitParameter(idxFitParameter_phi_lab_);
   if ( fixToGenVisMass_       && idxFitParameter_visMass_             != -1 ) algorithm->fixFitParameter(idxFitParameter_visMass_);
+  if ( fixToGenVisP4_         && idxFitParameter_shiftVisPt_          != -1 ) algorithm->fixFitParameter(idxFitParameter_shiftVisPt_);
   if ( fixToGenNuInvMass_     && idxFitParameter_nuInvMass_           != -1 ) algorithm->fixFitParameter(idxFitParameter_nuInvMass_);
   if ( fixToGenDecayDistance_ && idxFitParameter_decayDistance_shift_ != -1 ) algorithm->fixFitParameter(idxFitParameter_decayDistance_shift_);
 }
@@ -138,6 +141,7 @@ void SVfitTauDecayBuilder::initialize(SVfitTauDecayHypothesis* hypothesis, const
   hypothesis->p3Vis_unit_ = visCandidate->p4().Vect().Unit();
   
   hypothesis->visMass_ = visCandidate->mass();
+  hypothesis->p4Vis_shifted_ = visCandidate->p4();
 
   // Add protection against zero mass:  
   // if lower than the electron mass, set it to the electron mass
@@ -223,17 +227,19 @@ void SVfitTauDecayBuilder::initialize(SVfitTauDecayHypothesis* hypothesis, const
 	<< " Pt = " << visCandidate->pt() << ", eta = " << visCandidate->eta() << ", phi = " << visCandidate->phi() << " !!\n";
     
     if ( fixToGenVisMass_ ) {
-      hypothesis->visMass_    = genVisP4_.mass();
+      hypothesis->visMass_       = genVisP4_.mass();
     }
     if ( fixToGenVisP4_ ) {
-      hypothesis->p4_         = genVisP4_;
-      hypothesis->p3Vis_unit_ = genVisP4_.Vect().Unit();
-      hypothesis->visMass_    = genVisP4_.mass();
+      hypothesis->p4_            = genVisP4_;
+      hypothesis->p4Vis_shifted_ = genVisP4_;
+      hypothesis->p3Vis_unit_    = genVisP4_.Vect().Unit();
+      hypothesis->visMass_       = genVisP4_.mass();
     }
 
     if ( idxFitParameter_visEnFracX_  != -1 ) algorithm_->setFitParameterInitialValue(idxFitParameter_visEnFracX_, genVisEnFracX_);
     if ( idxFitParameter_phi_lab_     != -1 ) algorithm_->setFitParameterInitialValue(idxFitParameter_phi_lab_,    genPhiLab_);
     if ( idxFitParameter_visMass_     != -1 ) algorithm_->setFitParameterInitialValue(idxFitParameter_visMass_,    genVisMass_);
+    if ( idxFitParameter_shiftVisPt_  != -1 ) algorithm_->setFitParameterInitialValue(idxFitParameter_shiftVisPt_, hypothesis->p4Vis_shifted_.pt()/visCandidate->pt() - 1.);
     if ( idxFitParameter_nuInvMass_   != -1 ) algorithm_->setFitParameterInitialValue(idxFitParameter_nuInvMass_,  genNuInvMass_);
   }
 
@@ -254,7 +260,11 @@ void SVfitTauDecayBuilder::initialize(SVfitTauDecayHypothesis* hypothesis, const
   if ( idxFitParameter_visMass_ != -1 ) {
     SVfitParameter* fitParameter = algorithm_->getFitParameter(idxFitParameter_visMass_);
     assert(fitParameter);
-    fitParameter->setInitialValue(hypothesis->visMass_);
+    double visMass0 = hypothesis->visMass_;
+    const double epsilon = 1.e-2;
+    if ( visMass0 < (chargedPionMass + epsilon) ) visMass0 = (chargedPionMass + epsilon);
+    if ( visMass0 > (tauLeptonMass   - epsilon) ) visMass0 = (tauLeptonMass   - epsilon);
+    fitParameter->setInitialValue(visMass0);
   }
 
   // Extract the associated tracks, and fit a vertex if possible.
@@ -424,19 +434,24 @@ bool SVfitTauDecayBuilder::applyFitParameter(SVfitSingleParticleHypothesis* hypo
     if ( fixToGenVisMass_ || fixToGenVisP4_ ) hypothesis_T->visMass_ = genVisMass_;
     else hypothesis_T->visMass_ = param[idxFitParameter_visMass_];
   }
+  if ( idxFitParameter_shiftVisPt_ != -1 ) {
+    if ( fixToGenVisP4_ ) hypothesis_T->p4Vis_shifted_ = genVisP4_;
+    else hypothesis_T->p4Vis_shifted_ = (1. + param[idxFitParameter_shiftVisPt_])*hypothesis_T->p4_;
+  }
 
   double visEnFracX = param[idxFitParameter_visEnFracX_];
   double phi_lab    = param[idxFitParameter_phi_lab_];
-  double pVis_lab   = hypothesis_T->p4().P();
-  double enVis_lab  = hypothesis_T->p4().energy();
-  double visMass    = hypothesis_T->visMass();
+  const reco::Candidate::LorentzVector& p4Vis_lab = hypothesis_T->p4Vis_shifted_;
+  double pVis_lab   = p4Vis_lab.P();
+  double enVis_lab  = p4Vis_lab.energy();
+  double visMass    = hypothesis_T->visMass_;
   double nuInvMass  = ( nuSystemIsMassless() ) ? 0. : param[idxFitParameter_nuInvMass_];
 
   if ( fixToGenVisEnFracX_ ) visEnFracX = genVisEnFracX_;
   if ( fixToGenPhiLab_     ) phi_lab    = genPhiLab_;
   if ( fixToGenNuInvMass_  ) nuInvMass  = genNuInvMass_;
 
-  const reco::Candidate::Vector& p3Vis_unit = hypothesis_T->p3Vis_unit();
+  const reco::Candidate::Vector& p3Vis_unit = hypothesis_T->p3Vis_unit_;
   
   bool isValidSolution = true;
   
@@ -477,15 +492,13 @@ bool SVfitTauDecayBuilder::applyFitParameter(SVfitSingleParticleHypothesis* hypo
   reco::Candidate::LorentzVector p4Tau_lab = reco::Candidate::LorentzVector(
     pTau_lab*p3Tau_unit.x(), pTau_lab*p3Tau_unit.y(), pTau_lab*p3Tau_unit.z(), enTau_lab);
 
-  //double phi_labDEBUG = phiLabFromLabMomenta(p4Tau_lab, hypothesis_T->p4_);
-  //std::cout << "phi_labDEBUG = " << phi_labDEBUG << std::endl;
-
   hypothesis_T->p4_fitted_  = p4Tau_lab;
+  //hypothesis_T->dp4_        = (p4Tau_lab - p4Vis_lab);
   hypothesis_T->dp4_        = (p4Tau_lab - hypothesis_T->p4_);
 
   reco::Candidate::Vector boostToTauRF_vector = p4Tau_lab.BoostToCM();
   hypothesis_T->p4invis_rf_ = ROOT::Math::VectorUtil::boost(hypothesis_T->dp4_, boostToTauRF_vector);
-  hypothesis_T->p4vis_rf_   = ROOT::Math::VectorUtil::boost(hypothesis_T->p4(), boostToTauRF_vector);
+  hypothesis_T->p4vis_rf_   = ROOT::Math::VectorUtil::boost(p4Vis_lab, boostToTauRF_vector);
 
   hypothesis_T->visEnFracX_ = visEnFracX;
   hypothesis_T->gjAngle_    = gjAngle_rf;
@@ -499,7 +512,7 @@ bool SVfitTauDecayBuilder::applyFitParameter(SVfitSingleParticleHypothesis* hypo
     if ( verbosity_ >= 2 ) printVector(" eventVertexPos", eventVertexPos);
 #endif    
     hypothesis_T->expectedFlightPath_unit_ = AlgebraicVector3(p3Tau_unit.x(), p3Tau_unit.y(), p3Tau_unit.z());
-    hypothesis_T->expectedDecayDistanceJacobiFactor_ = 0.;
+    hypothesis_T->expectedDecayDistanceJacobiFactor_ = 1.;
     if ( fixToGenDecayDistance_ ) {
       hypothesis_T->expectedDecayDistance_ = genDecayDistance_;
       hypothesis_T->expectedDecayDistanceJacobiFactor_ = 1.;
@@ -522,7 +535,6 @@ bool SVfitTauDecayBuilder::applyFitParameter(SVfitSingleParticleHypothesis* hypo
 	//    (using tau lifetime information in the likelihood is numerically stable only if SVfit is run in "integration" mode,
 	//     so it is a safe assumption that the "fit" mode, for which the Jacobi factor may not apply, is not used)
 	//
-	//hypothesis_T->expectedDecayDistanceJacobiFactor_ = hypothesis_T->expectedDecayDistance_;
 	hypothesis_T->expectedDecayDistanceJacobiFactor_ = 1.0;
       } else if ( hypothesis_T->leadTrackTrajectory_ ) {
 	double a = (pTau_lab/tauLeptonMass)*cTauLifetime;
@@ -541,7 +553,6 @@ bool SVfitTauDecayBuilder::applyFitParameter(SVfitSingleParticleHypothesis* hypo
 	//
 	//    2) parametrization of the decay distance in terms of "expected decay distance" = beta gamma*c tau = (pTau/mTau)*c tau
 	//
-	//hypothesis_T->expectedDecayDistanceJacobiFactor_ = hypothesis_T->expectedDecayDistance_*a; 
 	hypothesis_T->expectedDecayDistanceJacobiFactor_ = a;
 	hypothesis_T->expectedDecayDistance_ = param[idxFitParameter_decayDistance_shift_]*a;
       }
@@ -594,11 +605,11 @@ bool SVfitTauDecayBuilder::applyFitParameter(SVfitSingleParticleHypothesis* hypo
       reco::Candidate::LorentzVector p4Flight(dxFlight, dyFlight, dzFlight, dFlight);
       std::cout << " flight-path: dx = " << dxFlight << ", dy = " << dyFlight << ", dz = " << dzFlight 
 		<< " (eta = " << p4Flight.eta() << ", phi = " << p4Flight.phi() << ", distance = " << dFlight << ","
-		<< " angle wrt. vis = " << angle(p4Flight, hypothesis_T->p4_) << ")" << std::endl;  
+		<< " angle wrt. vis = " << angle(p4Flight, p4Vis_lab) << ")" << std::endl;  
     }
-    std::cout << "p4Vis (lab): E = " << hypothesis_T->p4_.energy() << ","
-	      << " px = " << hypothesis_T->p4_.px() << ", py = " << hypothesis_T->p4_.py() << ","
-	      << " pz = " << hypothesis_T->p4_.pz() << " (eta = " << hypothesis_T->p4_.eta() << ", phi = " << hypothesis_T->p4_.phi() << ")" << std::endl;
+    std::cout << "p4Vis (lab): E = " << p4Vis_lab.energy() << ","
+	      << " px = " << p4Vis_lab.px() << ", py = " << p4Vis_lab.py() << ","
+	      << " pz = " << p4Vis_lab.pz() << " (eta = " << p4Vis_lab.eta() << ", phi = " << p4Vis_lab.phi() << ")" << std::endl;
     std::cout << "chargeTau = " << hypothesis_T->particle()->charge() << std::endl;
     std::cout << "p4Tau (lab): E = " << p4Tau_lab.energy() << ","
 	      << " px = " << p4Tau_lab.px() << ", py = " << p4Tau_lab.py() << ","

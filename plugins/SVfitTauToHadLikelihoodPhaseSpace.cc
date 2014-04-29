@@ -7,47 +7,63 @@
 
 #include "AnalysisDataFormats/SVfit/interface/SVfitTauToHadHypothesis.h"
 
-#include <TFile.h>
-#include <TMath.h>
-
 using namespace svFit_namespace;
+using namespace svFitTauToHadLikelihoodPhaseSpace_namespace;
 
 #define SVFIT_DEBUG 1
 
+namespace
+{
+  std::vector<lutEntryType*> readCfgLUT(const std::string& pluginName, const edm::VParameterSet& cfg) 
+  {
+    std::vector<lutEntryType*> lutEntries;
+    for ( edm::VParameterSet::const_iterator cfg_i = cfg.begin();
+	  cfg_i != cfg.end(); ++cfg_i ) {
+      lutEntryType* lutEntry = new lutEntryType(pluginName, *cfg_i);
+      lutEntries.push_back(lutEntry);
+    }	
+    return lutEntries;
+  }
+}
+
 SVfitTauToHadLikelihoodPhaseSpace::SVfitTauToHadLikelihoodPhaseSpace(const edm::ParameterSet& cfg)
   : SVfitSingleParticleLikelihood(cfg),
-    histogram_(0),
+    lutVisMass_(0),
+    lutVisMass_shift_(0),
+    lutVisPt_shift_(0),
     algorithm_(0)
 {
   applySinThetaFactor_ = cfg.exists("applySinThetaFactor") ?
     cfg.getParameter<bool>("applySinThetaFactor") : false;
 
   varyVisMass_ = cfg.getParameter<bool>("varyVisMass");
-  if ( varyVisMass_ ) {
-    edm::FileInPath inputFileName = cfg.getParameter<edm::FileInPath>("inputFileName");
-    if ( !inputFileName.isLocal() ) 
-      throw cms::Exception("SVfitTauToHadLikelihoodPhaseSpace") 
-	<< " Failed to find File = " << inputFileName << " !!\n";
-    std::string histogramName = cfg.getParameter<std::string>("histogramName");
-    TFile* inputFile = new TFile(inputFileName.fullPath().data());
-    TH1* histogramTmp = dynamic_cast<TH1*>(inputFile->Get(histogramName.data()));
-    if ( !histogramTmp )
-      throw cms::Exception("SVfitTauToHadLikelihoodPhaseSpace") 
-	<< " Failed to load visMassHistogram = " << histogramName.data() << " from file = " << inputFileName.fullPath().data() << " !!\n";
-    histogram_ = (TH1*)histogramTmp->Clone(std::string(pluginName_).append("_").append(histogramTmp->GetName()).data());
-    firstBin_ = 1;
-    lastBin_ = histogram_->GetNbinsX();
-    delete inputFile;
+  if ( varyVisMass_ ) {    
+    lutVisMass_ = new lutEntryType(pluginName_, cfg);
   }
-  varyDeltaVisMass_ = cfg.getParameter<bool>("varyDeltaVisMass");
-  if ( varyDeltaVisMass_ ) {
-
+  
+  shiftVisMass_ = cfg.getParameter<bool>("shiftVisMass");
+  if ( shiftVisMass_ ) {
+    edm::VParameterSet cfgVisMassResolution = cfg.getParameter<edm::VParameterSet>("visMassResolution");
+    lutEntriesVisMass_shift_ = readCfgLUT(pluginName_, cfgVisMassResolution);
+  }
+  shiftVisPt_ = cfg.getParameter<bool>("shiftVisPt");
+  if ( shiftVisPt_ ) {
+    edm::VParameterSet cfgVisPtResolution = cfg.getParameter<edm::VParameterSet>("visPtResolution");
+    lutEntriesVisPt_shift_ = readCfgLUT(pluginName_, cfgVisPtResolution);
   }
 }
 
 SVfitTauToHadLikelihoodPhaseSpace::~SVfitTauToHadLikelihoodPhaseSpace()
 {
-  delete histogram_;
+  delete lutVisMass_;
+  for ( std::vector<lutEntryType*>::iterator it = lutEntriesVisMass_shift_.begin();
+	it != lutEntriesVisMass_shift_.end(); ++it ) {
+    delete (*it);
+  }
+  for ( std::vector<lutEntryType*>::iterator it = lutEntriesVisPt_shift_.begin();
+	it != lutEntriesVisPt_shift_.end(); ++it ) {
+    delete (*it);
+  }
 }
 
 void SVfitTauToHadLikelihoodPhaseSpace::beginJob(SVfitAlgorithmBase* algorithm)
@@ -56,9 +72,82 @@ void SVfitTauToHadLikelihoodPhaseSpace::beginJob(SVfitAlgorithmBase* algorithm)
 
   algorithm->requestFitParameter(prodParticleLabel_,   svFit_namespace::kTau_visEnFracX, pluginName_);
   algorithm->requestFitParameter(prodParticleLabel_,   svFit_namespace::kTau_phi_lab,    pluginName_);
-  if ( varyVisMass_ || varyDeltaVisMass_ ) {
+  if ( varyVisMass_ || shiftVisMass_ ) {
     algorithm->requestFitParameter(prodParticleLabel_, svFit_namespace::kTau_visMass,    pluginName_);
   }
+  if ( shiftVisPt_ ) {
+    algorithm->requestFitParameter(prodParticleLabel_, svFit_namespace::kTau_shiftVisPt, pluginName_);
+  }
+}
+
+namespace
+{
+  int getTauDecayMode(const SVfitSingleParticleHypothesis* hypothesis)
+  {
+    const SVfitTauToHadHypothesis* hypothesis_T = dynamic_cast<const SVfitTauToHadHypothesis*>(hypothesis);
+    assert(hypothesis_T != 0);
+    
+    const pat::Tau* tauJet = dynamic_cast<const pat::Tau*>(hypothesis_T->particle().get());
+    assert(tauJet);
+    
+    int tauDecayMode = tauJet->decayMode();
+    
+    return tauDecayMode;
+  }
+
+  const lutEntryType* findLUT(const SVfitSingleParticleHypothesis* hypothesis, const std::vector<lutEntryType*>& lutEntries) 
+  {
+    //std::cout << "<findLUT>:" << std::endl;
+    
+    int tauDecayMode = getTauDecayMode(hypothesis);
+    //std::cout << " tauDecayMode = " << tauDecayMode << std::endl;
+    
+    const lutEntryType* retVal = 0;
+    for ( std::vector<lutEntryType*>::const_iterator lutEntry = lutEntries.begin();
+	  lutEntry != lutEntries.end(); ++lutEntry ) {
+      for ( std::vector<int>::const_iterator lutEntry_tauDecayMode = (*lutEntry)->tauDecayModes_.begin();
+	    lutEntry_tauDecayMode != (*lutEntry)->tauDecayModes_.end(); ++lutEntry_tauDecayMode ) {
+	//std::cout << "lutEntry->tauDecayMode = " << (*lutEntry_tauDecayMode) << std::endl;
+	if ( (*lutEntry_tauDecayMode) == tauDecayMode || (*lutEntry_tauDecayMode) == -1 ) {
+	  retVal = (*lutEntry);
+	  break;
+	}
+      }
+    }
+    
+    //std::cout << "--> retVal = " << retVal << std::endl;
+    return retVal;
+  }
+}
+
+void SVfitTauToHadLikelihoodPhaseSpace::beginCandidate(const SVfitSingleParticleHypothesis* hypothesis)
+{
+#ifdef SVFIT_DEBUG     
+  if ( this->verbosity_ ) {
+    std::cout << "<SVfitTauToHadLikelihoodPhaseSpace::beginCandidate (pluginName = " << pluginName_ << ")>:" << std::endl;
+    std::cout << " shiftVisMass = " << shiftVisMass_ << std::endl;
+    std::cout << " shiftVisPt = " << shiftVisPt_ << std::endl;
+  }
+#endif
+  if ( shiftVisMass_ ) {
+    lutVisMass_shift_ = findLUT(hypothesis, lutEntriesVisMass_shift_);
+    if ( !lutVisMass_shift_ ) throw cms::Exception("SVfitTauToHadLikelihoodPhaseSpace::beginCandidate") 
+      << " No tau mass resolution defined for tau decay mode = " << getTauDecayMode(hypothesis) << " !!\n";
+    visMass_unshifted_ = hypothesis->p4().mass();
+    if ( visMass_unshifted_ < chargedPionMass ) visMass_unshifted_ = chargedPionMass;
+    if ( visMass_unshifted_ > tauLeptonMass   ) visMass_unshifted_ = tauLeptonMass;
+  }
+  if ( shiftVisPt_ ) {
+    lutVisPt_shift_ = findLUT(hypothesis, lutEntriesVisPt_shift_);
+    if ( !lutVisPt_shift_ ) throw cms::Exception("SVfitTauToHadLikelihoodPhaseSpace::beginCandidate") 
+      << " No tau Pt resolution defined for tau decay mode = " << getTauDecayMode(hypothesis) << " !!\n";
+  }
+#ifdef SVFIT_DEBUG     
+  if ( this->verbosity_ ) {
+    std::cout << " lutVisMass_shift = " << lutVisMass_shift_ << std::endl;
+    std::cout << " lutVisPt_shift = " << lutVisPt_shift_ << std::endl;
+  }
+#endif
 }
 
 double SVfitTauToHadLikelihoodPhaseSpace::operator()(const SVfitSingleParticleHypothesis* hypothesis, int polSign) const
@@ -78,7 +167,7 @@ double SVfitTauToHadLikelihoodPhaseSpace::operator()(const SVfitSingleParticleHy
   double decayAngle = hypothesis_T->gjAngle();  
   double visEnFracX = hypothesis_T->visEnFracX();
   double visMass = hypothesis_T->visMass();
-  if ( !(varyVisMass_ || varyDeltaVisMass_) ) {
+  if ( !(varyVisMass_ || shiftVisMass_) ) {
     if ( visMass < chargedPionMass ) visMass = chargedPionMass;
     if ( visMass > tauLeptonMass   ) visMass = tauLeptonMass;
   }
@@ -108,13 +197,29 @@ double SVfitTauToHadLikelihoodPhaseSpace::operator()(const SVfitSingleParticleHy
   if ( applySinThetaFactor_ ) prob *= (0.5*TMath::Sin(decayAngle));
 
   if ( varyVisMass_ ) {    
-    int bin = histogram_->FindBin(visMass);
-    if ( bin <= firstBin_ ) bin = firstBin_;
-    if ( bin >= lastBin_  ) bin = lastBin_;
-    prob *= histogram_->GetBinContent(bin);
+    assert(lutVisMass_);
+    int bin = lutVisMass_->histogram_->FindBin(visMass);
+    if ( bin <= lutVisMass_->firstBin_ ) bin = lutVisMass_->firstBin_;
+    if ( bin >= lutVisMass_->lastBin_  ) bin = lutVisMass_->lastBin_;
+    prob *= lutVisMass_->histogram_->GetBinContent(bin);
   }
-  if ( varyDeltaVisMass_ ) {    
 
+  if ( shiftVisMass_ ) {    
+    assert(lutVisMass_shift_);
+    double deltaVisMass = visMass_unshifted_ - visMass;
+    int bin = lutVisMass_shift_->histogram_->FindBin(deltaVisMass);
+    if ( bin <= lutVisMass_shift_->firstBin_ ) bin = lutVisMass_shift_->firstBin_;
+    if ( bin >= lutVisMass_shift_->lastBin_  ) bin = lutVisMass_shift_->lastBin_;
+    prob *= lutVisMass_shift_->histogram_->GetBinContent(bin);
+  }
+  if ( shiftVisPt_ ) {    
+    assert(lutVisPt_shift_);
+    double recTauPtDivGenTauPt = ( hypothesis_T->p4Vis_shifted().pt() > 0. ) ?
+      (hypothesis_T->p4().pt()/hypothesis_T->p4Vis_shifted().pt()) : 1.e+3;
+    int bin = lutVisPt_shift_->histogram_->FindBin(recTauPtDivGenTauPt);
+    if ( bin <= lutVisPt_shift_->firstBin_ ) bin = lutVisPt_shift_->firstBin_;
+    if ( bin >= lutVisPt_shift_->lastBin_  ) bin = lutVisPt_shift_->lastBin_;
+    prob *= lutVisPt_shift_->histogram_->GetBinContent(bin);
   }
   
   if ( applyVisPtCutCorrection_ ) {

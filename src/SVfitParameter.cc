@@ -98,6 +98,7 @@ std::string get_name_incl_type(const std::string& name, int type)
   else if ( type == svFit_namespace::kTau_phi_lab                 ) retVal.append("phi_lab");
   else if ( type == svFit_namespace::kTau_decayDistance_lab_shift ) retVal.append("decayDistance_lab_shift");
   else if ( type == svFit_namespace::kTau_visMass                 ) retVal.append("visMass");
+  else if ( type == svFit_namespace::kTau_shiftVisPt              ) retVal.append("shiftVisPt");
   else if ( type == svFit_namespace::kTau_nuInvMass               ) retVal.append("nuInvMass");
   else if ( type == svFit_namespace::kLep_shiftEn                 ) retVal.append("shiftEn");
   else if ( type == svFit_namespace::kNu_energy_lab               ) retVal.append("energy_lab");
@@ -126,6 +127,7 @@ void SVfitParameter::initializeDefaultValues()
   defaultInitialValues_[svFit_namespace::kTau_phi_lab]                 =  0.;
   defaultInitialValues_[svFit_namespace::kTau_decayDistance_lab_shift] =  0.; 
   defaultInitialValues_[svFit_namespace::kTau_visMass]                 =  0.8; // GeV
+  defaultInitialValues_[svFit_namespace::kTau_shiftVisPt]              =  0.; 
   defaultInitialValues_[svFit_namespace::kTau_nuInvMass]               =  0.8; // GeV
   defaultInitialValues_[svFit_namespace::kLep_shiftEn]                 =  0.;
   defaultInitialValues_[svFit_namespace::kNu_energy_lab]               =  0.;
@@ -140,8 +142,9 @@ void SVfitParameter::initializeDefaultValues()
   defaultLimits_[svFit_namespace::kPV_shiftZ]                          = pdouble(         -2.,           +2.);  // cm
   defaultLimits_[svFit_namespace::kTau_visEnFracX]                     = pdouble(          0.,            1.);  // dimensionless
   defaultLimits_[svFit_namespace::kTau_phi_lab]                        = pdouble(-TMath::Pi(),  +TMath::Pi());  // rad
-  defaultLimits_[svFit_namespace::kTau_decayDistance_lab_shift]        = pdouble(        -2.5,           +2.5); // cm
+  defaultLimits_[svFit_namespace::kTau_decayDistance_lab_shift]        = pdouble(         -2.5,          +2.5); // cm
   defaultLimits_[svFit_namespace::kTau_visMass]                        = pdouble(chargedPionMass, tauLeptonMass); // GeV
+  defaultLimits_[svFit_namespace::kTau_shiftVisPt]                     = pdouble(         -1.,           +1.5); // relative to measured hadronic tau transverse momentum
   defaultLimits_[svFit_namespace::kTau_nuInvMass]                      = pdouble(          0., tauLeptonMass);  // GeV
   defaultLimits_[svFit_namespace::kLep_shiftEn]                        = pdouble(          0.,           10.);  // relative to measured lepton energy
   defaultLimits_[svFit_namespace::kNu_energy_lab]                      = pdouble(          0.,         1.e+3);  // GeV
@@ -151,13 +154,14 @@ void SVfitParameter::initializeDefaultValues()
   defaultLimits_[svFit_namespace::kW_mass]                             = pdouble(80.399 - 3.*2.085, 80.399 + 3.*2.085); // GeV
 
   defaultStepSizes_.resize(svFit_namespace::kNumFitParameter);
-  defaultStepSizes_[svFit_namespace::kPV_shiftX]                       =  0.01;
-  defaultStepSizes_[svFit_namespace::kPV_shiftY]                       =  0.01;
+  defaultStepSizes_[svFit_namespace::kPV_shiftX]                       =  0.001;
+  defaultStepSizes_[svFit_namespace::kPV_shiftY]                       =  0.001;
   defaultStepSizes_[svFit_namespace::kPV_shiftZ]                       =  0.01;
   defaultStepSizes_[svFit_namespace::kTau_visEnFracX]                  =  0.1;
   defaultStepSizes_[svFit_namespace::kTau_phi_lab]                     =  0.25;
   defaultStepSizes_[svFit_namespace::kTau_decayDistance_lab_shift]     =  0.01;
   defaultStepSizes_[svFit_namespace::kTau_visMass]                     =  0.1;
+  defaultStepSizes_[svFit_namespace::kTau_shiftVisPt]                  =  0.025;
   defaultStepSizes_[svFit_namespace::kTau_nuInvMass]                   =  0.1;
   defaultStepSizes_[svFit_namespace::kLep_shiftEn]                     =  0.01;
   defaultStepSizes_[svFit_namespace::kNu_energy_lab]                   = 10.;

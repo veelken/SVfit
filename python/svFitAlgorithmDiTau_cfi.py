@@ -67,9 +67,44 @@ svFitTauLikelihoodPhaseSpace = cms.PSet(
     pluginType = cms.string("SVfitTauToHadLikelihoodPhaseSpace"),
     applySinThetaFactor = cms.bool(False),
     varyVisMass = cms.bool(False),
-    varyDeltaVisMass = cms.bool(False),
     inputFileName = cms.FileInPath("TauAnalysis/SVfit/data/svFitGenTauHadMassPDF.root"),
     histogramName = cms.string('DQMData/genTauMassAnalyzer/genTauJetMass'),
+    shiftVisMass = cms.bool(False),
+    visMassResolution = cms.VPSet(
+        cms.PSet(
+            tauDecayModes = cms.vint32(0),
+            inputFileName = cms.FileInPath("TauAnalysis/SVfit/data/svFitVisMassAndPtResolutionPDF.root"),
+            histogramName = cms.string('recMinusGenTauMass_recDecayModeEq0'),
+        ),
+        cms.PSet(
+            tauDecayModes = cms.vint32(1, 2),
+            inputFileName = cms.FileInPath("TauAnalysis/SVfit/data/svFitVisMassAndPtResolutionPDF.root"),
+            histogramName = cms.string('recMinusGenTauMass_recDecayModeEq1'),
+        ),
+        cms.PSet(
+            tauDecayModes = cms.vint32(10),
+            inputFileName = cms.FileInPath("TauAnalysis/SVfit/data/svFitVisMassAndPtResolutionPDF.root"),
+            histogramName = cms.string('recMinusGenTauMass_recDecayModeEq10'),
+        )
+    ),
+    shiftVisPt = cms.bool(False),
+    visPtResolution = cms.VPSet(
+        cms.PSet(
+            tauDecayModes = cms.vint32(0),
+            inputFileName = cms.FileInPath("TauAnalysis/SVfit/data/svFitVisMassAndPtResolutionPDF.root"),
+            histogramName = cms.string('recTauPtDivGenTauPt_recDecayModeEq0'),
+        ),
+        cms.PSet(
+            tauDecayModes = cms.vint32(1, 2),
+            inputFileName = cms.FileInPath("TauAnalysis/SVfit/data/svFitVisMassAndPtResolutionPDF.root"),
+            histogramName = cms.string('recTauPtDivGenTauPt_recDecayModeEq1'),
+        ),
+        cms.PSet(
+            tauDecayModes = cms.vint32(10),
+            inputFileName = cms.FileInPath("TauAnalysis/SVfit/data/svFitVisMassAndPtResolutionPDF.root"),
+            histogramName = cms.string('recTauPtDivGenTauPt_recDecayModeEq10'),
+        )
+    ),
     verbosity = cms.int32(0)
 )
 

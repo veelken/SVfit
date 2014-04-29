@@ -13,7 +13,7 @@ namespace svFit_namespace
     // fit parameters related to shifts of primary event vertex
     kPV_shiftX, kPV_shiftY, kPV_shiftZ,
     // fit parameters specific to tau decays
-    kTau_visEnFracX, kTau_phi_lab, kTau_decayDistance_lab_shift, kTau_visMass, kTau_nuInvMass,
+    kTau_visEnFracX, kTau_phi_lab, kTau_decayDistance_lab_shift, kTau_visMass, kTau_shiftVisPt, kTau_nuInvMass,
     // fit parameters specific to electrons, muons not originating from tau decays
     kLep_shiftEn,
     // fit parameters specific to neutrinos (not originating from tau decays)
