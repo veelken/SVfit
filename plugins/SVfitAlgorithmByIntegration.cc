@@ -117,7 +117,7 @@ SVfitAlgorithmByIntegration::~SVfitAlgorithmByIntegration()
 void SVfitAlgorithmByIntegration::beginJob()
 {
   if ( verbosity_ >= 1 ) {
-    std::cout << "<SVfitAlgorithmByIntegration::beginJob>:" << std::endl;
+    std::cout << "<SVfitAlgorithmByIntegration::beginJob (pluginName = " << pluginName_ << ")>:" << std::endl;
   }
 
   SVfitAlgorithmBase::beginJob();
@@ -146,6 +146,7 @@ void SVfitAlgorithmByIntegration::beginJob()
   }
   if ( verbosity_ >= 1 ) {
     std::cout << " numDimensions = " << numDimensions_ << std::endl;
+    std::cout << " verbosity = " << verbosity_ << std::endl;
   }
 
   fitParameterValues_ = new double[fitParameters_.size()];
@@ -190,7 +191,7 @@ void SVfitAlgorithmByIntegration::fitImp() const
 	if ( minVisMass == -1. || visMass < minVisMass ) minVisMass = visMass;
       }
     }
-    (*fitParameterReplacement)->beginEvent(minVisMass);
+    (*fitParameterReplacement)->beginEvent(0.5*((*fitParameterReplacement)->iterStepSizeFactor_ + 1.)*minVisMass);
   }
 
   delete massParForReplacements_;
@@ -391,8 +392,7 @@ void SVfitAlgorithmByIntegration::setMassResults(
     resonance->isValidSolution_ = true;
     
     if ( verbosity_ >= 1 ) { 
-      std::cout << "<SVfitAlgorithmByIntegration::setMassResults>:" << std::endl;
-      std::cout << " pluginName = " << pluginName_ << std::endl;
+      std::cout << "<SVfitAlgorithmByIntegration::setMassResults (pluginName = " << pluginName_ << ")>:" << std::endl;
       std::cout << "--> mass = " << resonance->mass_ << " + " << resonance->massErrUp_ << " - " << resonance->massErrDown_ << std::endl;
       std::cout << " (mean = " << massMean << ", median = " << massQuantile050 << ", max = " << massMaximum << ")" << std::endl;
       //resonance->print(std::cout);

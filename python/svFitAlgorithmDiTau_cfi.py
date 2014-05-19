@@ -353,7 +353,7 @@ svFitProducerByIntegration = cms.EDProducer("SVfitProducerByIntegration",
             numCallsIntEval = cms.uint32(10000),
             maxChi2 = cms.double(2.),
             maxIntEvalIter = cms.uint32(5),                                          
-            precision = cms.double(0.00001)
+            precision = cms.double(1.e-5)
         ),
         max_or_median = cms.string("max"),
         applyJacobiFactors = cms.bool(False),

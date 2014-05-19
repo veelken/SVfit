@@ -47,6 +47,7 @@ class SVfitLikelihoodBase
     stream << "<SVfitLikelihoodBase::print>:" << std::endl;
     stream << " pluginName = " << pluginName_ << std::endl;
     stream << " pluginType = " << pluginType_ << std::endl;
+    stream << " verbosity = " << verbosity_ << std::endl;
   }
 
  protected:

@@ -19,6 +19,8 @@
 
 using namespace svFit_namespace;
 
+#define SVFIT_DEBUG 1
+
 const double defaultPFMEtResolutionX = 15.; // approx. resolution of Type-1 corrected PFMET in 2012
 const double defaultPFMEtResolutionY = 15.;
 
@@ -125,7 +127,7 @@ namespace
 
 void SVfitEventLikelihoodMEt2::beginCandidate(const SVfitEventHypothesis* hypothesis) const
 {
-  if ( this->verbosity_ >= 1 ) {
+  if ( verbosity_ >= 1 ) {
     std::cout << "<SVfitEventLikelihoodMEt2::beginCandidate>:" << std::endl;
     std::cout << " hypothesis = " << hypothesis << std::endl;
   }
@@ -151,7 +153,7 @@ void SVfitEventLikelihoodMEt2::beginCandidate(const SVfitEventHypothesis* hypoth
     pfMEtCov_(1, 1) *= sfMEtCov_;
   }
 
-  if ( this->verbosity_ >= 1 ) {
+  if ( verbosity_ >= 1 ) {
     std::cout << "pfMEt:" << std::endl;
     std::cout << " Px = " << hypothesis->met()->px() << ", Py = " << hypothesis->met()->py() << std::endl;
     if ( dynamic_cast<const pat::MET*>(hypothesis->met().get()) != 0 ) {
@@ -219,7 +221,7 @@ double SVfitEventLikelihoodMEt2::operator()(const SVfitEventHypothesis* hypothes
   residual_fitted0_ = hypothesis->dp4MEt_fitted().px();
   residual_fitted1_ = hypothesis->dp4MEt_fitted().py();
 #ifdef SVFIT_DEBUG     
-  if ( this->verbosity_ >= 2 ) {
+  if ( verbosity_ >= 2 ) {
     std::cout << "<SVfitEventLikelihoodMEt2::operator()>:" << std::endl;
     std::cout << " pxResidual_fitted = " << residual_fitted0_ << std::endl;
     std::cout << " pyResidual_fitted = " << residual_fitted1_ << std::endl;
@@ -234,7 +236,7 @@ double SVfitEventLikelihoodMEt2::operator()(const SVfitEventHypothesis* hypothes
 	        + residual_fitted1_*(pfMEtCovInverse10_*residual_fitted0_ + pfMEtCovInverse11_*residual_fitted1_);
     if ( tailProbCorrFunction_ ) {
       double tailProbCorr = tailProbCorrFunction_->eval(pull);
-      //if ( this->verbosity_ ) std::cout << "pull = " << pull << ": tailProbCorr = " << tailProbCorr << std::endl;
+      //if ( verbosity_ ) std::cout << "pull = " << pull << ": tailProbCorr = " << tailProbCorr << std::endl;
       if ( tailProbCorr > 0.9 ) pull /= tailProbCorr;
     }
     nll = nllConstTerm_ + 0.5*pull;
@@ -244,7 +246,7 @@ double SVfitEventLikelihoodMEt2::operator()(const SVfitEventHypothesis* hypothes
 
   double prob = TMath::Exp(-power_*nll);
 #ifdef SVFIT_DEBUG     
-  if ( this->verbosity_ >= 2 ) std::cout << "--> prob = " << prob << std::endl;
+  if ( verbosity_ >= 2 ) std::cout << "--> prob = " << prob << std::endl;
 #endif
   return prob;
 }
