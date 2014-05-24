@@ -12,6 +12,12 @@ using namespace svFitTauToHadLikelihoodPhaseSpace_namespace;
 
 #define SVFIT_DEBUG 1
 
+//namespace svFitTauToHadLikelihoodPhaseSpace_namespace
+//{
+//  std::map<std::string, TFile*> lutEntryType::inputFiles_;
+//  std::map<std::string, int> lutEntryType::inputFileUsage_;
+//}
+
 namespace
 {
   std::vector<lutEntryType*> readCfgLUT(const std::string& pluginName, const edm::VParameterSet& cfg) 
@@ -199,8 +205,8 @@ double SVfitTauToHadLikelihoodPhaseSpace::operator()(const SVfitSingleParticleHy
   if ( varyVisMass_ ) {    
     assert(lutVisMass_);
     int bin = lutVisMass_->histogram_->FindBin(visMass);
-    if ( bin <= lutVisMass_->firstBin_ ) bin = lutVisMass_->firstBin_;
-    if ( bin >= lutVisMass_->lastBin_  ) bin = lutVisMass_->lastBin_;
+    if ( bin < lutVisMass_->firstBin_ ) bin = lutVisMass_->firstBin_;
+    if ( bin > lutVisMass_->lastBin_  ) bin = lutVisMass_->lastBin_;
     prob *= lutVisMass_->histogram_->GetBinContent(bin);
   }
 
@@ -208,8 +214,16 @@ double SVfitTauToHadLikelihoodPhaseSpace::operator()(const SVfitSingleParticleHy
     assert(lutVisMass_shift_);
     double deltaVisMass = visMass_unshifted_ - visMass;
     int bin = lutVisMass_shift_->histogram_->FindBin(deltaVisMass);
-    if ( bin <= lutVisMass_shift_->firstBin_ ) bin = lutVisMass_shift_->firstBin_;
-    if ( bin >= lutVisMass_shift_->lastBin_  ) bin = lutVisMass_shift_->lastBin_;
+    if ( bin < lutVisMass_shift_->firstBin_ ) bin = lutVisMass_shift_->firstBin_;
+    if ( bin > lutVisMass_shift_->lastBin_  ) bin = lutVisMass_shift_->lastBin_;
+#ifdef SVFIT_DEBUG 
+    if ( verbosity_ ) {
+      //std::cout << "lutVisMass = " << lutVisMass_shift_->histogram_->GetName() << " (type = " << lutVisMass_shift_->histogram_->ClassName() << ")" << std::endl;
+      std::cout << "deltaVisMass = " << deltaVisMass << ": probCorr = " << lutVisMass_shift_->histogram_->GetBinContent(bin) << std::endl;
+      //std::cout << "bin = " << bin << " (firstBin = " << lutVisMass_shift_->firstBin_ << ", lastBin = " << lutVisMass_shift_->lastBin_ << ")" << std::endl;
+      //std::cout << "probCorr = " << lutVisMass_shift_->histogram_->GetBinContent(bin) << std::endl;
+    }
+#endif
     prob *= lutVisMass_shift_->histogram_->GetBinContent(bin);
   }
   if ( shiftVisPt_ ) {    
@@ -217,9 +231,21 @@ double SVfitTauToHadLikelihoodPhaseSpace::operator()(const SVfitSingleParticleHy
     double recTauPtDivGenTauPt = ( hypothesis_T->p4Vis_shifted().pt() > 0. ) ?
       (hypothesis_T->p4().pt()/hypothesis_T->p4Vis_shifted().pt()) : 1.e+3;
     int bin = lutVisPt_shift_->histogram_->FindBin(recTauPtDivGenTauPt);
-    if ( bin <= lutVisPt_shift_->firstBin_ ) bin = lutVisPt_shift_->firstBin_;
-    if ( bin >= lutVisPt_shift_->lastBin_  ) bin = lutVisPt_shift_->lastBin_;
+    if ( bin < lutVisPt_shift_->firstBin_ ) bin = lutVisPt_shift_->firstBin_;
+    if ( bin > lutVisPt_shift_->lastBin_  ) bin = lutVisPt_shift_->lastBin_;
+#ifdef SVFIT_DEBUG 
+    if ( verbosity_ ) {
+      //std::cout << "lutVisPt = " << lutVisPt_shift_->histogram_->GetName() << " (type = " << lutVisPt_shift_->histogram_->ClassName() << ")" << std::endl;
+      std::cout << "recTauPtDivGenTauPt = " << recTauPtDivGenTauPt << ": probCorr = " << lutVisPt_shift_->histogram_->GetBinContent(bin) << std::endl;
+      //std::cout << "bin = " << bin << " (firstBin = " << lutVisPt_shift_->firstBin_ << ", lastBin = " << lutVisPt_shift_->lastBin_ << ")" << std::endl;
+      //std::cout << "probCorr = " << lutVisPt_shift_->histogram_->GetBinContent(bin) << std::endl;
+    }
+#endif
     prob *= lutVisPt_shift_->histogram_->GetBinContent(bin);
+    // CV: account for Jacobi factor 
+    double genTauPtDivRecTauPt = ( recTauPtDivGenTauPt > 0. ) ? 
+      (1./recTauPtDivGenTauPt) : 1.e+1;
+    prob *= genTauPtDivRecTauPt;
   }
   
   if ( applyVisPtCutCorrection_ ) {
@@ -230,7 +256,7 @@ double SVfitTauToHadLikelihoodPhaseSpace::operator()(const SVfitSingleParticleHy
       probCorr = 1./((1. - xCut) + epsilon_regularization);
     }
 #ifdef SVFIT_DEBUG 
-    if ( this->verbosity_ ) std::cout << "probCorr (had) = " << probCorr << std::endl;
+    if ( verbosity_ ) std::cout << "probCorr (had) = " << probCorr << std::endl;
 #endif
     prob *= probCorr;
   }
@@ -238,13 +264,13 @@ double SVfitTauToHadLikelihoodPhaseSpace::operator()(const SVfitSingleParticleHy
   if ( algorithm_->applyJacobiFactors() && visEnFracX > 0. ) {
     double jacobiFactor = 1./(cube(visEnFracX));
 #ifdef SVFIT_DEBUG 
-    if ( this->verbosity_ ) std::cout << "jacobiFactor = " << jacobiFactor << std::endl;
+    if ( verbosity_ ) std::cout << "jacobiFactor = " << jacobiFactor << std::endl;
 #endif
     prob *= jacobiFactor;
   }
 
 #ifdef SVFIT_DEBUG       
-  if ( this->verbosity_ ) std::cout << "--> prob = " << prob << std::endl;
+  if ( verbosity_ ) std::cout << "--> prob = " << prob << std::endl;
 #endif
   return prob;
 }

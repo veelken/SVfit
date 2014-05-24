@@ -41,25 +41,44 @@ namespace svFitTauToHadLikelihoodPhaseSpace_namespace
 	throw cms::Exception("SVfitTauToHadLikelihoodPhaseSpace") 
 	  << " Failed to find File = " << inputFileName << " !!\n";
       std::string histogramName = cfg.getParameter<std::string>("histogramName");
-      TFile* inputFile = new TFile(inputFileName.fullPath().data());
+      inputFileName_full_ = inputFileName.fullPath().data();
+      TFile* inputFile = new TFile(inputFileName_full_.data());
+      //TFile* inputFile = 0;
+      //if ( inputFiles_.find(inputFileName_full_) != inputFiles_.end() ) {
+      //  inputFile = inputFiles_[inputFileName_full_];
+      //  inputFileUsage_[inputFileName_full_] = inputFileUsage_[inputFileName_full_] + 1;
+      //} else {
+      //  inputFile = new TFile(inputFileName_full_.data());
+      //  inputFiles_[inputFileName_full_] = inputFile;
+      //  inputFileUsage_[inputFileName_full_] = 1;
+      //}
       TH1* histogramTmp = dynamic_cast<TH1*>(inputFile->Get(histogramName.data()));
       if ( !histogramTmp )
 	throw cms::Exception("SVfitTauToHadLikelihoodPhaseSpace") 
 	  << " Failed to load histogram = " << histogramName.data() << " from file = " << inputFileName.fullPath().data() << " !!\n";
       histogram_ = (TH1*)histogramTmp->Clone(std::string(pluginName).append("_").append(histogramTmp->GetName()).data());
-      firstBin_ = 0;
-      lastBin_ = histogram_->GetNbinsX() + 1;
+      //histogram_ = histogramTmp;
+      firstBin_ = 1;
+      lastBin_ = histogram_->GetNbinsX();
       delete inputFile;
     }
     ~lutEntryType()
     {
       delete histogram_;
+      //inputFileUsage_[inputFileName_full_] = inputFileUsage_[inputFileName_full_] - 1;
+      //if ( inputFileUsage_[inputFileName_full_] == 0 ) {
+      //  delete inputFiles_[inputFileName_full_];
+      //  inputFiles_.erase(inputFileName_full_);
+      //}
     }
     typedef std::vector<int> vint;
     vint tauDecayModes_;
     TH1* histogram_;
     int firstBin_;
     int lastBin_;
+    std::string inputFileName_full_;
+    //static std::map<std::string, TFile*> inputFiles_;  // key = inputFileName
+    //static std::map<std::string, int> inputFileUsage_; // key = inputFileName
   };
 }
 

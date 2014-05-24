@@ -18,6 +18,8 @@ using namespace svFit_namespace;
 
 enum { kMax, kMedian, kMean3sigmaWithinMax, kMean5sigmaWithinMax };
 
+#define SVFIT_DEBUG 1
+
 namespace 
 {
   double g(double* x, size_t dim, void* param)
@@ -187,7 +189,7 @@ void SVfitAlgorithmByIntegration::fitImp() const
           dynamic_cast<const SVfitResonanceHypothesis*>(
             currentEventHypothesis_->SVfitEventHypothesisBase::resonance(par_resonance->resonanceName_));
 	par_resonance->value_ = (*par_resonance->valueExtractor_)(*resonance);
-	double visMass = resonance->p4().mass();
+	double visMass = resonance->p4().mass();	
 	if ( minVisMass == -1. || visMass < minVisMass ) minVisMass = visMass;
       }
     }
@@ -547,17 +549,24 @@ double SVfitAlgorithmByIntegration::nll(const double* x, const double* param) co
   for ( std::vector<fitParameterReplacementType*>::const_iterator fitParameterReplacement = fitParameterReplacements_.begin();
 	fitParameterReplacement != fitParameterReplacements_.end(); ++fitParameterReplacement ) {
     TFormula* formula = (*fitParameterReplacement)->replaceBy_;
-    //std::cout << "formula = " << formula->GetTitle() << std::endl;
 
     for ( int iPar = 0; iPar < (*fitParameterReplacement)->numParForReplacements_; ++iPar ) {
       formula->SetParameter(iPar, (*(*fitParameterReplacement)->parForReplacements_[iPar])(fitParameterValues_));
-      //std::cout << "par #" << iPar << " = " << formula->GetParameter(iPar) << std::endl;
     }
 
 //--- check if fitParameter is within limits;
 //    return probability zero if not
     double fitParameterValue = formula->Eval(param[(*fitParameterReplacement)->idxMassParameter_]);
-    //std::cout << "value = " << fitParameterValue << std::endl;
+#ifdef SVFIT_DEBUG     
+    if ( verbosity_ >= 3 ) {
+      std::cout << "replacing '" << (*fitParameterReplacement)->toReplace_ << "':" << std::endl;
+      std::cout << " formula = " << formula->GetTitle() << std::endl;
+      for ( int iPar = 0; iPar < (*fitParameterReplacement)->numParForReplacements_; ++iPar ) {
+	std::cout << "par #" << iPar << " = " << formula->GetParameter(iPar) << std::endl;
+      }
+      std::cout << "--> setting fitParameter[" << (*fitParameterReplacement)->idxToReplace_ << "] = " << fitParameterValue << std::endl;
+    }
+#endif
     if ( fitParameterValue >= fitParameters_[(*fitParameterReplacement)->idxToReplace_].LowerLimit() &&
 	 fitParameterValue <= fitParameters_[(*fitParameterReplacement)->idxToReplace_].UpperLimit() ) {
       fitParameterValues_[(*fitParameterReplacement)->idxToReplace_] = fitParameterValue;
@@ -567,7 +576,7 @@ double SVfitAlgorithmByIntegration::nll(const double* x, const double* param) co
   }
 
 #ifdef SVFIT_DEBUG     
-  if ( verbosity_ >= 2 ) {
+  if ( verbosity_ >= 3 ) {
     std::vector<double> fitParameterValues_vector(fitParameters_.size());
     unsigned numFitParameters = fitParameters_.size(); 
     for ( unsigned iFitParameter = 0; iFitParameter < numFitParameters; ++iFitParameter ) {
@@ -598,7 +607,16 @@ double SVfitAlgorithmByIntegration::nll(const double* x, const double* param) co
       }
 
       double probCorr = formula->Eval(param[(*fitParameterReplacement)->idxMassParameter_]);
-      //std::cout << "value = " << probCorr << std::endl;
+#ifdef SVFIT_DEBUG     
+      if ( verbosity_ >= 3 ) {
+	std::cout << "deltaFuncDerrivative for replacement of '" << (*fitParameterReplacement)->toReplace_ << "':" << std::endl;
+	std::cout << " formula = " << formula->GetTitle() << std::endl;
+	for ( int iPar = 0; iPar < (*fitParameterReplacement)->numParForReplacements_; ++iPar ) {
+	  std::cout << "par #" << iPar << " = " << formula->GetParameter(iPar) << std::endl;
+	}
+	std::cout << "--> probCorr = " << probCorr << std::endl;
+      }
+#endif
       if ( probCorr > 0. && !TMath::IsNaN(probCorr) ) {
 	nll -= TMath::Log(probCorr);
       }

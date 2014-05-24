@@ -429,23 +429,40 @@ bool SVfitTauDecayBuilder::applyFitParameter(SVfitSingleParticleHypothesis* hypo
   // Cast to the concrete tau decay hypothesis
   SVfitTauDecayHypothesis* hypothesis_T = dynamic_cast<SVfitTauDecayHypothesis*>(hypothesis);
   assert(hypothesis_T);
+
+  double visEnFracX = param[idxFitParameter_visEnFracX_];
+  double phi_lab    = param[idxFitParameter_phi_lab_];
   
   if ( idxFitParameter_visMass_ != -1 ) {
     if ( fixToGenVisMass_ || fixToGenVisP4_ ) hypothesis_T->visMass_ = genVisMass_;
     else hypothesis_T->visMass_ = param[idxFitParameter_visMass_];
   }
-  if ( idxFitParameter_shiftVisPt_ != -1 ) {
-    if ( fixToGenVisP4_ ) hypothesis_T->p4Vis_shifted_ = genVisP4_;
-    else hypothesis_T->p4Vis_shifted_ = (1. + param[idxFitParameter_shiftVisPt_])*hypothesis_T->p4_;
-  }
+  double visMass = hypothesis_T->visMass_;
 
-  double visEnFracX = param[idxFitParameter_visEnFracX_];
-  double phi_lab    = param[idxFitParameter_phi_lab_];
+  if ( idxFitParameter_shiftVisPt_ != -1 ) {
+    if ( fixToGenVisP4_ ) {
+      hypothesis_T->p4Vis_shifted_ = genVisP4_;    
+    } else {
+      double shiftInv = 1. + param[idxFitParameter_shiftVisPt_];
+      double shift = ( shiftInv > 1.e-1 ) ?
+        (1./shiftInv) : 1.e+1;
+      //double pxVis_shifted = shift*hypothesis_T->p4_.px();
+      //double pyVis_shifted = shift*hypothesis_T->p4_.py();
+      //double pzVis_shifted = shift*hypothesis_T->p4_.pz();
+      //double pVis_shifted  = shift*hypothesis_T->p4_.P();
+      //visMass *= shift; // CV: take mass and momentum to be correlated
+      //double enVis_shifted = TMath::Sqrt(pVis_shifted*pVis_shifted + visMass*visMass);
+      //hypothesis_T->p4Vis_shifted_.SetXYZT(pxVis_shifted, pyVis_shifted, pzVis_shifted, enVis_shifted);
+      hypothesis_T->p4Vis_shifted_ = shift*hypothesis_T->p4_;
+    }
+  }
   const reco::Candidate::LorentzVector& p4Vis_lab = hypothesis_T->p4Vis_shifted_;
-  double pVis_lab   = p4Vis_lab.P();
-  double enVis_lab  = p4Vis_lab.energy();
-  double visMass    = hypothesis_T->visMass_;
+  double pVis_lab  = p4Vis_lab.P();
+  double enVis_lab = p4Vis_lab.energy();
+  //std::cout << "enVis_lab = " << enVis_lab << ", pVis_lab = " << pVis_lab << std::endl;
+
   double nuInvMass  = ( nuSystemIsMassless() ) ? 0. : param[idxFitParameter_nuInvMass_];
+  //std::cout << "nuInvMass = " << nuInvMass << std::endl;
 
   if ( fixToGenVisEnFracX_ ) visEnFracX = genVisEnFracX_;
   if ( fixToGenPhiLab_     ) phi_lab    = genPhiLab_;
@@ -454,6 +471,11 @@ bool SVfitTauDecayBuilder::applyFitParameter(SVfitSingleParticleHypothesis* hypo
   const reco::Candidate::Vector& p3Vis_unit = hypothesis_T->p3Vis_unit_;
   
   bool isValidSolution = true;
+
+  // add protection against unphysical mass of visible tau decay products
+  if ( visMass < electronMass || visMass > tauLeptonMass ) { 
+    isValidSolution = false;
+  }  
   
 //--- compute Gottfried-Jackson angle
 //   (angle of visible decay products wrt. tau lepton flight direction)
@@ -464,6 +486,10 @@ bool SVfitTauDecayBuilder::applyFitParameter(SVfitSingleParticleHypothesis* hypo
 
 //--- compute tau lepton energy and momentum in laboratory frame  
   double enTau_lab = enVis_lab/visEnFracX;
+  if ( (enTau_lab*enTau_lab) < tauLeptonMass2 ) {
+    enTau_lab = tauLeptonMass;
+    isValidSolution = false;
+  }
   double pTau_lab = TMath::Sqrt(square(enTau_lab) - tauLeptonMass2);
 #ifdef SVFIT_DEBUG 
   if ( verbosity_ >= 2 ) std::cout << "pTau_lab = " << pTau_lab << ", enTau_lab = " << enTau_lab << std::endl;

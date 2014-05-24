@@ -31,7 +31,7 @@ allMuTauPairs = cms.EDProducer("PATMuTauPairProducer",
         dRoverlapPFJet = cms.double(0.3),
         dRoverlapPFCandidate = cms.double(0.1)
     ),
-    doMtautauMin = cms.bool(True),                     
+    doMtautauMin = cms.bool(False),                     
     verbosity = cms.untracked.int32(0)
 )
 

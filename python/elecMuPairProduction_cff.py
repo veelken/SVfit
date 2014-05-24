@@ -22,7 +22,16 @@ allElecMuPairs = cms.EDProducer("PATElecMuPairProducer",
     recoMode = cms.string(""),
     doSVreco = cms.bool(True),                          
     svFit = cms.PSet(),                            
-    scaleFuncImprovedCollinearApprox = cms.string('1'),                            
+    scaleFuncImprovedCollinearApprox = cms.string('1'),
+    doPFMEtSign = cms.bool(True),
+    pfMEtSign = cms.PSet(
+        srcPFJets = cms.InputTag('ak5PFJets'),
+        srcPFCandidates = cms.InputTag('particleFlow'),
+        resolution = METSignificance_params,
+        dRoverlapPFJet = cms.double(0.3),
+        dRoverlapPFCandidate = cms.double(0.1)
+    ),
+    doMtautauMin = cms.bool(False),    
     verbosity = cms.untracked.int32(0)
 )
 
