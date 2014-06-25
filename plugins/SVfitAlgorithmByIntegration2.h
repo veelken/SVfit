@@ -23,6 +23,7 @@
 #include "TauAnalysis/SVfit/interface/SVfitAlgorithmBase.h"
 #include "TauAnalysis/SVfit/interface/MarkovChainIntegrator.h"
 #include "TauAnalysis/SVfit/interface/svFitAuxFunctions.h"
+#include "TauAnalysis/SVfit/interface/SVfitResonanceUserFloatFillerBase.h"
 
 #include <Math/Functor.h>
 #include <TH1.h>
@@ -201,6 +202,7 @@ class SVfitAlgorithmByIntegration2 : public SVfitAlgorithmBase
     TH1* probHistResonanceEta_;
     TH1* probHistResonancePhi_;
     TH1* probHistResonanceMass_;
+    std::vector<SVfitResonanceUserFloatFillerBase*> userFloatFillers_;
     std::vector<AuxProbHistogramsDaughter*> probHistDaughters_;
   };
   mutable std::vector<AuxProbHistogramsResonance*> probHistResonances_;
@@ -210,6 +212,8 @@ class SVfitAlgorithmByIntegration2 : public SVfitAlgorithmBase
   int max_or_median_;
 
   bool applyJacobiFactors_;
+
+  std::map<std::string, edm::VParameterSet> cfgUserFloatFillers_; // key = resonanceName
 };
 
 #endif

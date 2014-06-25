@@ -223,6 +223,17 @@ SVfitAlgorithmByIntegration2::SVfitAlgorithmByIntegration2(const edm::ParameterS
     << " Invalid Configuration Parameter 'max_or_median' = " << max_or_median_string << " !!\n";
 
   applyJacobiFactors_ = cfg.getParameter<bool>("applyJacobiFactors");
+
+  edm::ParameterSet cfgEvent = cfg.getParameter<edm::ParameterSet>("event");
+  edm::ParameterSet cfgResonances = cfgEvent.getParameter<edm::ParameterSet>("resonances");
+  for ( std::vector<resonanceModelType*>::const_iterator resonance = eventModel_->resonances_.begin();
+	resonance != eventModel_->resonances_.end(); ++resonance ) {
+    const std::string& resonanceName = (*resonance)->resonanceName_;
+    edm::ParameterSet cfgResonance = cfgResonances.getParameter<edm::ParameterSet>(resonanceName);
+    if ( cfgResonance.exists("userFloatFillers") ) {      
+      cfgUserFloatFillers_[resonanceName] = cfgResonance.getParameter<edm::VParameterSet>("userFloatFillers");
+    }
+  }
 }
 
 SVfitAlgorithmByIntegration2::~SVfitAlgorithmByIntegration2() 
@@ -248,6 +259,10 @@ SVfitAlgorithmByIntegration2::~SVfitAlgorithmByIntegration2()
     delete (*it1)->probHistResonanceEta_;
     delete (*it1)->probHistResonancePhi_;
     delete (*it1)->probHistResonanceMass_;
+    for ( std::vector<SVfitResonanceUserFloatFillerBase*>::iterator it2 = (*it1)->userFloatFillers_.begin();
+	  it2 != (*it1)->userFloatFillers_.end(); ++it2 ) {
+      delete (*it2);
+    }
     for ( std::vector<AuxProbHistogramsDaughter*>::iterator it2 = (*it1)->probHistDaughters_.begin();
 	  it2 != (*it1)->probHistDaughters_.end(); ++it2 ) {
       delete (*it2)->probHistDaughterPt_;
@@ -328,6 +343,7 @@ void SVfitAlgorithmByIntegration2::beginJob()
     if ( !histogram->GetSumw2N() ) histogram->Sumw2();
     probHistFitParameter_[iDimension] = histogram;
   }
+
   size_t idxResonance = 0;
   for ( std::vector<resonanceModelType*>::const_iterator resonance = eventModel_->resonances_.begin();
 	resonance != eventModel_->resonances_.end(); ++resonance ) {
@@ -342,6 +358,17 @@ void SVfitAlgorithmByIntegration2::beginJob()
     probHistResonance->probHistResonancePhi_ = bookPhiHistogram(histogramPhiName.data());
     std::string histogramMassName = std::string("probHistResonanceMass").append("_").append(resonanceName);
     probHistResonance->probHistResonanceMass_ = bookMassHistogram(histogramMassName.data());
+
+    std::map<std::string, edm::VParameterSet>::const_iterator cfgUserFloatFillers_resonance = cfgUserFloatFillers_.find(resonanceName);
+    if ( cfgUserFloatFillers_resonance != cfgUserFloatFillers_.end() ) {
+      for ( edm::VParameterSet::const_iterator cfgUserFloatFiller = cfgUserFloatFillers_resonance->second.begin();
+	    cfgUserFloatFiller != cfgUserFloatFillers_resonance->second.end(); ++cfgUserFloatFiller ) {
+	std::string pluginType = cfgUserFloatFiller->getParameter<std::string>("pluginType");      
+	SVfitResonanceUserFloatFillerBase* userFloatFiller = SVfitResonanceUserFloatFillerPluginFactory::get()->create(pluginType, *cfgUserFloatFiller);
+	probHistResonance->userFloatFillers_.push_back(userFloatFiller);
+      }
+    }
+
     size_t idxDaughter = 0;
     for ( std::vector<daughterModelType*>::const_iterator daughter = (*resonance)->daughters_.begin();
 	  daughter != (*resonance)->daughters_.end(); ++daughter ) {
@@ -357,6 +384,7 @@ void SVfitAlgorithmByIntegration2::beginJob()
       probHistResonance->probHistDaughters_.push_back(probHistDaughter);
       ++idxDaughter;
     }
+
     probHistResonances_.push_back(probHistResonance);
     ++idxResonance;
   }
@@ -474,21 +502,6 @@ TH1* SVfitAlgorithmByIntegration2::bookMassHistogram(const std::string& histogra
   return histogram;
 }
 
-TH1* compHistogramDensity(const TH1* histogram)
-{
-  std::string histogramName_density = std::string(histogram->GetName()).append("_density");
-  TH1* histogram_density = (TH1*)histogram->Clone(histogramName_density.data());
-  for ( int iBin = 1; iBin <= histogram->GetNbinsX(); ++iBin ) {
-    double binContent = histogram->GetBinContent(iBin);
-    double binError = histogram->GetBinError(iBin);
-    double binWidth = histogram->GetBinWidth(iBin);
-    assert(binWidth > 0.);
-    histogram_density->SetBinContent(iBin, binContent/binWidth);
-    histogram_density->SetBinError(iBin, binError/binWidth);
-  }
-  return histogram_density;
-}
-
 void SVfitAlgorithmByIntegration2::fitImp() const
 {
   for ( std::vector<fitParameterReplacementType*>::const_iterator fitParameterReplacement = fitParameterReplacements_.begin();
@@ -538,6 +551,13 @@ void SVfitAlgorithmByIntegration2::fitImp() const
     (*probHistResonance)->probHistResonanceEta_->Reset();
     (*probHistResonance)->probHistResonancePhi_->Reset();
     (*probHistResonance)->probHistResonanceMass_->Reset();
+    for ( std::vector<SVfitResonanceUserFloatFillerBase*>::iterator userFloatFiller = (*probHistResonance)->userFloatFillers_.begin();
+	  userFloatFiller != (*probHistResonance)->userFloatFillers_.end(); ++userFloatFiller ) {
+      const SVfitResonanceHypothesis* resonance = currentEventHypothesis_->resonance((*probHistResonance)->idxResonance_);
+      assert(resonance);
+      (*userFloatFiller)->beginCandidate(resonance);
+      (*userFloatFiller)->resetHistograms();
+    }
     for ( std::vector<AuxProbHistogramsDaughter*>::iterator probHistDaughter = (*probHistResonance)->probHistDaughters_.begin();
 	  probHistDaughter != (*probHistResonance)->probHistDaughters_.end(); ++probHistDaughter ) {
       (*probHistDaughter)->probHistDaughterPt_->Reset();
@@ -609,6 +629,11 @@ void SVfitAlgorithmByIntegration2::fitImp() const
 	resonance->phiErrUp_ = TMath::Abs(phiQuantile084 - phi);
 	resonance->phiErrDown_ = TMath::Abs(phi - phiQuantile016);
 	resonance->phi_isValid_ = true;
+      }
+
+      for ( std::vector<SVfitResonanceUserFloatFillerBase*>::iterator userFloatFiller = (*probHistResonance)->userFloatFillers_.begin();
+	    userFloatFiller != (*probHistResonance)->userFloatFillers_.end(); ++userFloatFiller ) {
+	(*userFloatFiller)->addUserFloats(resonance);
       }
 
       for ( std::vector<AuxProbHistogramsDaughter*>::const_iterator probHistDaughter = (*probHistResonance)->probHistDaughters_.begin();
@@ -718,9 +743,9 @@ void SVfitAlgorithmByIntegration2::fitImp() const
 //--- set four-vector information for di-tau system
 //   (NOTE: needs to be done **after** computing NLL,
 //          as NLL evaluation overwrites kinematics of SVfitResonanceHypothesis objects)  
-  for ( std::vector<resonanceModelType*>::const_iterator resonance = eventModel_->resonances_.begin();
-	resonance != eventModel_->resonances_.end(); ++resonance ) {
-    const std::string& resonanceName = (*resonance)->resonanceName_;
+  for ( std::vector<resonanceModelType*>::const_iterator resonanceModel = eventModel_->resonances_.begin();
+	resonanceModel != eventModel_->resonances_.end(); ++resonanceModel ) {
+    const std::string& resonanceName = (*resonanceModel)->resonanceName_;
     SVfitResonanceHypothesis* resonance = const_cast<SVfitResonanceHypothesis*>(currentEventHypothesis_->resonance(resonanceName));
     assert(resonance);
     reco::Candidate::PolarLorentzVector resonanceP4_fitted(resonance->pt_, resonance->eta_, resonance->phi_, resonance->mass_);
@@ -1001,6 +1026,10 @@ void SVfitAlgorithmByIntegration2::fillProbHistograms(const double* x)
     (*probHistResonance)->probHistResonanceEta_->Fill(resonanceP4_fitted.eta());
     (*probHistResonance)->probHistResonancePhi_->Fill(resonanceP4_fitted.phi());
     (*probHistResonance)->probHistResonanceMass_->Fill(resonanceP4_fitted.mass());
+    for ( std::vector<SVfitResonanceUserFloatFillerBase*>::iterator userFloatFiller = (*probHistResonance)->userFloatFillers_.begin();
+	  userFloatFiller != (*probHistResonance)->userFloatFillers_.end(); ++userFloatFiller ) {
+      (*userFloatFiller)->fillHistograms(resonance);
+    }
     for ( std::vector<AuxProbHistogramsDaughter*>::iterator probHistDaughter = (*probHistResonance)->probHistDaughters_.begin();
 	  probHistDaughter != (*probHistResonance)->probHistDaughters_.end(); ++probHistDaughter ) {
       const SVfitSingleParticleHypothesis* daughter = resonance->daughter((*probHistDaughter)->idxDaughter_);

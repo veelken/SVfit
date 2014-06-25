@@ -142,6 +142,9 @@ namespace svFit_namespace
   double logGaussian2d(const AlgebraicVector2&, const AlgebraicMatrix22&);
   double logGaussian3d(const AlgebraicVector3&, const AlgebraicMatrix33&);
 
+  /// Compute density of distribution (divide histogram by bin-width)
+  TH1* compHistogramDensity(const TH1*);
+
   /// Extract maximum, mean and { 0.84, 0.50, 0.16 } quantiles of distribution
   void extractHistogramProperties(const TH1*, const TH1*, double&, double&, double&, double&, double&, double&, double&, double&, int = 0);
 }

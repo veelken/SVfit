@@ -397,14 +397,15 @@ const reco::Candidate* getDistPion(const reco::GenJet& genTauJet)
 
   std::vector<const reco::GenParticle*> genTauJetConstituents = genTauJet.getGenConstituents();
 
-  if ( genTauDecayMode == "oneProng1Pi0" ||
+  if ( genTauDecayMode == "oneProng0Pi0" ||
+       genTauDecayMode == "oneProng1Pi0" ||
        genTauDecayMode == "oneProng2Pi0" ) {
     for ( std::vector<const reco::GenParticle*>::const_iterator genTauJetConstituent = genTauJetConstituents.begin();
 	  genTauJetConstituent != genTauJetConstituents.end(); ++genTauJetConstituent ) {
 
-//--- tau- --> rho- --> pi- pi0 or tau- --> a1- --> pi- pi0 pi0 case;
+//--- tau- --> pi- nu, tau- --> rho- --> pi- pi0 or tau- --> a1- --> pi- pi0 pi0 case;
 //    the "distinguishable" pion is the charged one
-      if ((*genTauJetConstituent)->charge()) return (*genTauJetConstituent);
+      if ( TMath::Abs((*genTauJetConstituent)->charge()) > 0.5 ) return (*genTauJetConstituent);
     }
   } else if ( genTauDecayMode == "threeProng0Pi0" ) {
     double genTauJetCharge = genTauJet.charge();
@@ -414,8 +415,8 @@ const reco::Candidate* getDistPion(const reco::GenJet& genTauJet)
 
 //--- tau- --> a1- --> pi- pi+ pi- case
 //    the "distinguishable" pion is the pion of charge opposite to the tau-jet charge
-      if ( (*genTauJetConstituent)->charge() != 0. &&
-	   ((*genTauJetConstituent)->charge()*genTauJetCharge) < 0. ) {
+      if ( TMath::Abs((*genTauJetConstituent)->charge()) > 0.5 &&
+	   ((*genTauJetConstituent)->charge()*genTauJetCharge) < -0.5 ) {
 	return *genTauJetConstituent;
       }
     }

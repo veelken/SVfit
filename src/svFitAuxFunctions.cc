@@ -517,6 +517,21 @@ namespace svFit_namespace
   //-------------------------------------------------------------------------------
   //
 
+  TH1* compHistogramDensity(const TH1* histogram)
+  {
+    std::string histogramName_density = std::string(histogram->GetName()).append("_density");
+    TH1* histogram_density = (TH1*)histogram->Clone(histogramName_density.data());
+    for ( int iBin = 1; iBin <= histogram->GetNbinsX(); ++iBin ) {
+      double binContent = histogram->GetBinContent(iBin);
+      double binError = histogram->GetBinError(iBin);
+      double binWidth = histogram->GetBinWidth(iBin);
+      assert(binWidth > 0.);
+      histogram_density->SetBinContent(iBin, binContent/binWidth);
+      histogram_density->SetBinError(iBin, binError/binWidth);
+    }
+    return histogram_density;
+  }
+
   double getMeanOfBinsAboveThreshold(const TH1* histogram, double threshold, int verbosity)
   {
     //std::cout << "<getMeanOfBinsAboveThreshold>:" << std::endl;
